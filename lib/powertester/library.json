@@ -1,0 +1,19 @@
+{
+    "name": "Power tester",
+    "keywords": "esp32, PSU",
+    "description": "ESP32 PSU Parameters Check Class extended",
+    "license": "MIT",
+    "version": "0.1",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ERROPiX/ESP32_AnalogWrite.git"
+    },
+    "authors": [
+        {
+            "name": "Tiziano ARBIZZANI",
+            "email": "tiziano.arbizzani@gmail.com"
+        }
+    ]
+}
