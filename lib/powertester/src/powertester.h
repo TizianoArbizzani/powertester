@@ -22,7 +22,7 @@ enum ReadingMode
 class reading
 {
 public:
-    reading();
+    reading(const char *Unit = "V");
 
     void reset();
     void set(float ReadData);
@@ -34,16 +34,16 @@ private:
     float _get_mean();
     int _get_reads();
 
-    float _min = 1;
-    float _mean = 0;
-    float _max = -1;
-    int _reads = 0;
+    char _Unit[8] = {0};
+
+    float READ_min, READ_mean, READ_max;
+    int READ_reads;
 };
 
 class powertester : public Adafruit_INA219
 {
 public:
-    powertester(int i2c_address);
+    powertester(int i2c_address, const char *Id);
     void setup();
     void update(ReadingMode Rm);
     void SetReading(DataTable Bitmap);
@@ -56,6 +56,7 @@ public:
     reading power_mW;
 
 private:
+    char _Id[8];
     int _Address;
     uint16_t _DataRead;
 };

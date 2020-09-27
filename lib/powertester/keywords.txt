@@ -3,6 +3,7 @@
 #######################################
 
 powertester KEYWORD1
+reading KEYWORD1
 
 #######################################
 # Datatypes

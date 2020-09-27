@@ -5,48 +5,47 @@
 // READING - Public
 // --------------------------------
 
-reading::reading()
+reading::reading(const char *Unit) : READ_min(1), READ_mean(0), READ_max(-1), READ_reads(0)
 {
-    _min = 2;
-    _max = -2;
+    strncpy(_Unit, Unit, 8);
 }
 
 void reading::reset()
 {
-    _mean = 0;
-    _max = -1;
-    _min = 1;
-    _reads = 0;
+    READ_mean = 0;
+    READ_max = -1;
+    READ_min = 1;
+    READ_reads = 0;
 }
 
 void reading::set(float ReadData)
 {
-    _reads++;
+    READ_reads++;
 
-    _mean += ReadData;
+    READ_mean += ReadData;
 
-    if (ReadData > _max)
+    if (ReadData > READ_max)
     {
-        _max = ReadData;
+        READ_max = ReadData;
     }
 
-    if (ReadData < _min)
+    if (ReadData < READ_min)
     {
-        _min = ReadData;
+        READ_min = ReadData;
     }
 }
 
 void reading::display(Stream *S)
 {
     S->print("[");
-    S->print(_get_reads());
+    S->printf("%05d", _get_reads());
     S->print(":");
-    S->print(_get_min());
+    S->printf("%5.3f", _get_min());
     S->print(";");
-    S->print(_get_mean());
+    S->printf("%5.3f", _get_mean());
     S->print(";");
-    S->print(_get_max());
-    S->print("]");
+    S->printf("%5.3f", _get_max());
+    S->printf(" %s]", _Unit);
     reset();
 }
 
@@ -54,24 +53,27 @@ void reading::display(Stream *S)
 // READING - Private
 // --------------------------------
 
-int reading::_get_reads() { return _reads; }
-float reading::_get_min() { return _min; }
-float reading::_get_max() { return _max; }
+int reading::_get_reads() { return READ_reads; }
+float reading::_get_min() { return READ_min; }
+float reading::_get_max() { return READ_max; }
 float reading::_get_mean()
 {
-    _mean /= _reads;
-    _reads = 0;
-    return _mean;
+    if (READ_reads)
+    {
+        READ_mean /= READ_reads;
+        READ_reads = 0;
+    }
+
+    return READ_mean;
 }
 
 // --------------------------------
 // POWERTESTER - Public
 // --------------------------------
 
-powertester::powertester(int i2c_address)
+powertester::powertester(int i2c_address, const char *Id) : shunt_mV("mV"), bus_V(), load_V(), current_Ma("mA"), power_mW("mW"), _Address(i2c_address), _DataRead(INAREAD_CURRENT)
 {
-    _Address = i2c_address;
-    _DataRead = INAREAD_CURRENT;
+    strncpy(_Id, Id, 8);
 }
 
 void powertester::setup()
@@ -140,6 +142,7 @@ void powertester::display(Stream *S)
 {
     update(INAMODE_SPARSE);
 
+    S->printf("%s: ", _Id);
     shunt_mV.display(S);
     bus_V.display(S);
     load_V.display(S);
