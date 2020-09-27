@@ -23,25 +23,27 @@ void setup(void)
   pinMode(ONBOARD_LED, OUTPUT);
   ONBOARD_LED_ON;
 
-  Serial.begin(921600);
+  Serial.begin(SERIALSPEED);
   while (!Serial)
   {
     delay(1); // will pause Zero, Leonardo, etc until serial console opens
   }
 
-  Serial.println("* Esp32GetCurrent Operations ................... [Start]");
+  Serial.printf("* Esp32GetCurrent Operations ................... [Start: %u Bps]\n", SERIALSPEED);
 
   PT_Left.setup();
   PT_Right.setup();
 
   Serial.println("* INA219 : Setting main data reading ........... [*** Current ***]");
 
-  PT_Left.SetReading(IR_CURR);
-  PT_Right.SetReading(IR_CURR);
+  PT_Left.SetReading(RS(IR_CURR));
+  PT_Right.SetReading(RS(IR_CURR));
 
   Serial.println("* INA219 : Measuring voltage and current ....... [*** Sampling Start ***]");
 
   NextPrint = millis() + TFT_UPDATES_MS;
+
+  ONBOARD_LED_OFF;
 }
 
 void loop(void)
@@ -65,8 +67,10 @@ void loop(void)
 
     NextPrint = millis() + TFT_UPDATES_MS; // Rearm trigger for next operation
 
+    // ONBOARD_LED_ON;
     PT_Left.display(&Serial);
     PT_Right.display(&Serial);
+    // ONBOARD_LED_OFF;
   }
 
   //-----------------------------------------------

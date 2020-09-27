@@ -116,17 +116,18 @@ void powertester::SetReading(int Bitmap = IR_CURR)
 {
     int i = 0;
 
-    //std::bitset<32> TBS(Bitmap);
-    //_ReadMask = TBS;
+    std::bitset<32> TBS(Bitmap);
+    _ReadMask = TBS;
 
-    _ReadMask.reset();
-    _ReadMask.set(Bitmap);
+    //std::cout << "---> ReadMask: [" << _ReadMask << "] Temporary: [" << TBS << "]" << std::endl;
 
     // Set New Readings Focus()
     for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
     {
         it->setFocus(_ReadMask[i++]);
     }
+
+    //sleep(10000);
 }
 
 void powertester::update(uint16_t Rm = IM_RECURR)
@@ -148,6 +149,7 @@ void powertester::update(uint16_t Rm = IM_RECURR)
     {
         ShuntVoltage = _Active ? getShuntVoltage_mV() : 0;
     }
+
     if (LocalReadMask[IR_SHNT])
     {
         _Readings.at(IR_SHNT).set(_Active ? ShuntVoltage : 0);

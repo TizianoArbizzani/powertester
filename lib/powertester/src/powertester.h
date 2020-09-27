@@ -13,11 +13,7 @@
 #define IR_CURR 3 // Read Load Current
 #define IR_PWR 4  // Read Load Power
 
-// #define IR_SHNT 1 // Read Shunt Voltage
-// #define IR_BUS 2  // Read Bus Voltage
-// #define IR_LOAD 4 // Read Load Voltage
-// #define IR_CURR 8 // Read Load Current
-// #define IR_PWR 16 // Read Load Power
+#define RS(X) (1 << X) // Convert from position to value
 
 #define IM_RECURR 0 // Read everytime you can
 #define IM_SPARSE 1 // Read at display refresh only
