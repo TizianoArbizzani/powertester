@@ -8,7 +8,7 @@
 // READING - Public
 // --------------------------------
 
-reading::reading(const char *Unit) : _IR_min(1), _IR_pile(0), _IR_max(-1), _IR_reads(0)
+reading::reading(const char *Unit) : _IR_min(1), _IR_pile(0), _IR_max(-1), _IR_reads(0), _focus(false)
 {
     strncpy(_Unit, Unit, 8);
 }
@@ -40,20 +40,23 @@ void reading::set(float ReadData)
 
 void reading::display(Stream *S)
 {
-    S->print("[");
-    S->printf("%05d", _get_reads());
-    S->print(":");
-    S->printf("%5.3f", _get_min());
-    S->print(";");
-    S->printf("%5.3f", _get_mean());
-    S->print(";");
-    S->printf("%5.3f", _get_max());
-    S->printf(" %s]", _Unit);
+    S->printf("%s%06d:%5.2f;%5.2f;%5.2f%s%s ",
+              _focus ? "<<" : "[[",
+              _get_reads(), _get_min(), _get_mean(), _get_max(),
+              _Unit,
+              _focus ? ">>" : "]]");
     reset();
 }
 
+bool reading::setFocus(bool Focus = true)
+{
+    _focus = Focus;
+    return (_focus);
+}
+bool reading::hasFocus() { return (_focus); }
+
 // --------------------------------
-// READING - Private
+//  READING - Private
 // --------------------------------
 
 int reading::_get_reads() { return _IR_reads; }
@@ -94,55 +97,64 @@ bool powertester::setup()
     if (!begin())
     {
         Serial.printf("* INA219 chip (Addr: %X) ....................... [!!! Init failed !!!]\n", _Address);
-        // while (1)
-        // {
-        //     delay(1000);
-        // }
+        _Active = false;
     }
-    Serial.printf("* INA219 chip (Addr: %X) ....................... [Initialized]\n", _Address);
+    else
+    {
+        Serial.printf("* INA219 chip (Addr: %X) ....................... [Initialized]\n", _Address);
+        _Active = true;
 
-    // Calibrating INA219 chip
-    setCalibration_16V_400mA(); // 16V, 400mA range (higher precision on volts and amps):
-    Serial.printf("* INA219 chip (Addr: %X) ....................... [Set: : 16V, 400mA range]\n", _Address);
+        // Calibrating INA219 chip
+        setCalibration_16V_400mA(); // 16V, 400mA range (higher precision on volts and amps):
+        Serial.printf("* INA219 chip (Addr: %X) ....................... [Set: : 16V, 400mA range]\n", _Address);
+    }
 
-    return (true);
+    return (_Active);
 }
 
-void powertester::SetReading(DataTable Bitmap = IR_CURR)
+void powertester::SetReading(int Bitmap = IR_CURR)
 {
+    int i = 0;
+
+    //std::bitset<32> TBS(Bitmap);
+    //_ReadMask = TBS;
+
     _ReadMask.reset();
     _ReadMask.set(Bitmap);
+
+    // Set New Readings Focus()
+    for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
+    {
+        it->setFocus(_ReadMask[i++]);
+    }
 }
 
-void powertester::update(ReadingMode Rm = IM_RECURR)
+void powertester::update(uint16_t Rm = IM_RECURR)
 {
-    std::bitset<8> LocalReadMask = _ReadMask;
+    std::bitset<32> LocalReadMask = _ReadMask;
 
     float BusVoltage = 0;
     float ShuntVoltage = 0;
 
     // Check if is a recurrent read || reverse bitmap
-    if (Rm)
-    {
-        LocalReadMask = ~_ReadMask;
-    }
+    LocalReadMask = Rm ? ~_ReadMask : _ReadMask;
 
     // Make every read, if Requested ...
     if ((LocalReadMask[IR_BUS]) || (LocalReadMask[IR_LOAD]))
     {
-        BusVoltage = getBusVoltage_V();
+        BusVoltage = _Active ? getBusVoltage_V() : 0;
     }
     if ((LocalReadMask[IR_SHNT]) || (LocalReadMask[IR_LOAD]))
     {
-        ShuntVoltage = getShuntVoltage_mV();
+        ShuntVoltage = _Active ? getShuntVoltage_mV() : 0;
     }
     if (LocalReadMask[IR_SHNT])
     {
-        _Readings.at(IR_SHNT).set(ShuntVoltage);
+        _Readings.at(IR_SHNT).set(_Active ? ShuntVoltage : 0);
     }
     if (LocalReadMask[IR_BUS])
     {
-        _Readings.at(IR_BUS).set(BusVoltage);
+        _Readings.at(IR_BUS).set(_Active ? BusVoltage : 0);
     }
     if (LocalReadMask[IR_LOAD])
     {
@@ -150,11 +162,11 @@ void powertester::update(ReadingMode Rm = IM_RECURR)
     }
     if (LocalReadMask[IR_CURR])
     {
-        _Readings.at(IR_CURR).set(getCurrent_mA());
+        _Readings.at(IR_CURR).set(_Active ? getCurrent_mA() : 0);
     }
     if (LocalReadMask[IR_PWR])
     {
-        _Readings.at(IR_PWR).set(getPower_mW());
+        _Readings.at(IR_PWR).set(_Active ? getPower_mW() : 0);
     }
 }
 

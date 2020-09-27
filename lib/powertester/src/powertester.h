@@ -7,20 +7,20 @@
 #include <array>
 #include <bitset>
 
-enum DataTable
-{
-    IR_SHNT = 0, // Read Shunt Voltage
-    IR_BUS,      // Read Bus Voltage
-    IR_LOAD,     // Read Load Voltage
-    IR_CURR,     // Read Load Current
-    IR_PWR       // Read Load Power
-};
+#define IR_SHNT 0 // Read Shunt Voltage
+#define IR_BUS 1  // Read Bus Voltage
+#define IR_LOAD 2 // Read Load Voltage
+#define IR_CURR 3 // Read Load Current
+#define IR_PWR 4  // Read Load Power
 
-enum ReadingMode
-{
-    IM_RECURR = 0, // Read everytime you can
-    IM_SPARSE,     // Read at display refresh only
-};
+// #define IR_SHNT 1 // Read Shunt Voltage
+// #define IR_BUS 2  // Read Bus Voltage
+// #define IR_LOAD 4 // Read Load Voltage
+// #define IR_CURR 8 // Read Load Current
+// #define IR_PWR 16 // Read Load Power
+
+#define IM_RECURR 0 // Read everytime you can
+#define IM_SPARSE 1 // Read at display refresh only
 
 class reading
 {
@@ -30,6 +30,8 @@ public:
     void reset();
     void set(float ReadData);
     void display(Stream *S);
+    bool hasFocus();
+    bool setFocus(bool Focus);
 
 private:
     float _get_min();
@@ -43,6 +45,8 @@ private:
     float _IR_pile; // Values pile
     float _IR_max;  // Maximum value read
     int _IR_reads;  // Number of readings
+
+    bool _focus; // This is the current focused reading
 };
 
 class powertester : public Adafruit_INA219
@@ -50,15 +54,16 @@ class powertester : public Adafruit_INA219
 public:
     powertester(int i2c_address, const char *Id);
     bool setup();
-    void update(ReadingMode Rm);
-    void SetReading(DataTable Bitmap);
+    void update(uint16_t Rm);
+    void SetReading(int Bitmap);
     void display(Stream *S);
 
 private:
-    char _Id[8];
-    int _Address;
-    std::bitset<8> _ReadMask;
-    std::array<reading, 5> _Readings;
+    char _Id[8];                      // INA219 Chip Label
+    int _Address;                     // INA219 I2C address (default 0x40)
+    bool _Active;                     // INA219 is active (I2C Reachable??)
+    std::bitset<32> _ReadMask;        // Which INA219 field must be read at max speed
+    std::array<reading, 5> _Readings; // INA219 Reading fields
 };
 
 #endif

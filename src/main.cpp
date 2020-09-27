@@ -1,14 +1,16 @@
 #include <Arduino.h>
+
+#include <defines.h>
+#include <macros.h>
+
 #include <SPI.h>
 #include <TFT_eSPI.h>
 #include <powertester.h>
 
-powertester PT_Left(0x40, "Sx");  // Left INA219 Chip (Left PSU)
-powertester PT_Right(0x41, "Dx"); // Right INA219 Chip (Right PSU)
+powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID);    // Left INA219 Chip (Left PSU)
+powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID); // Right INA219 Chip (Right PSU)
 
 TFT_eSPI tft = TFT_eSPI(); // TFT Display
-
-const int PrintEvery = 1000; // Update TFT every x milliseconds
 
 unsigned long NextPrint; // Time to go for next TFT Update
 
@@ -17,6 +19,9 @@ void setup(void)
   //-----------------------------------------------
   // Setup Start
   //-----------------------------------------------
+
+  pinMode(ONBOARD_LED, OUTPUT);
+  ONBOARD_LED_ON;
 
   Serial.begin(921600);
   while (!Serial)
@@ -34,29 +39,9 @@ void setup(void)
   PT_Left.SetReading(IR_CURR);
   PT_Right.SetReading(IR_CURR);
 
-  Serial.println("* INA219 : Verify correct object initialization  [*** Start ***]");
-
-  PT_Left.display(&Serial);
-  PT_Right.display(&Serial);
-
-  // Serial.println("* INA219 : Verify correct object initialization  [*** First Update ***]");
-
-  // PT_Left.update(IM_RECURR);
-  // PT_Right.update(IM_RECURR);
-
-  // Serial.println("* INA219 : Verify correct object initialization  [*** Second Update ***]");
-
-  // PT_Left.update(IM_RECURR);
-  // PT_Right.update(IM_RECURR);
-
-  // Serial.println("* INA219 : Verify correct object initialization  [*** First Display ***]");
-
-  // PT_Left.display(&Serial);
-  // PT_Right.display(&Serial);
-
   Serial.println("* INA219 : Measuring voltage and current ....... [*** Sampling Start ***]");
 
-  NextPrint = millis() + PrintEvery;
+  NextPrint = millis() + TFT_UPDATES_MS;
 }
 
 void loop(void)
@@ -78,7 +63,7 @@ void loop(void)
     // New print update needed
     //-----------------------------------------------
 
-    NextPrint = millis() + PrintEvery; // Rearm trigger for next operation
+    NextPrint = millis() + TFT_UPDATES_MS; // Rearm trigger for next operation
 
     PT_Left.display(&Serial);
     PT_Right.display(&Serial);
