@@ -1,37 +1,40 @@
 #include "Arduino.h"
 #include "powertester.h"
 
+// #include <iostream>
+// std::cout << "---> Rm: (" << Rm << ") GRM: [" << _ReadMask << "] LRM: [" << LocalReadMask << "]" << std::endl;
+
 // --------------------------------
 // READING - Public
 // --------------------------------
 
-reading::reading(const char *Unit) : READ_min(1), READ_mean(0), READ_max(-1), READ_reads(0)
+reading::reading(const char *Unit) : _IR_min(1), _IR_pile(0), _IR_max(-1), _IR_reads(0)
 {
     strncpy(_Unit, Unit, 8);
 }
 
 void reading::reset()
 {
-    READ_mean = 0;
-    READ_max = -1;
-    READ_min = 1;
-    READ_reads = 0;
+    _IR_max = -1;
+    _IR_pile = 0;
+    _IR_min = 1;
+    _IR_reads = 0;
 }
 
 void reading::set(float ReadData)
 {
-    READ_reads++;
+    _IR_reads++;
 
-    READ_mean += ReadData;
+    _IR_pile += ReadData;
 
-    if (ReadData > READ_max)
+    if (ReadData > _IR_max)
     {
-        READ_max = ReadData;
+        _IR_max = ReadData;
     }
 
-    if (ReadData < READ_min)
+    if (ReadData < _IR_min)
     {
-        READ_min = ReadData;
+        _IR_min = ReadData;
     }
 }
 
@@ -53,102 +56,117 @@ void reading::display(Stream *S)
 // READING - Private
 // --------------------------------
 
-int reading::_get_reads() { return READ_reads; }
-float reading::_get_min() { return READ_min; }
-float reading::_get_max() { return READ_max; }
+int reading::_get_reads() { return _IR_reads; }
+float reading::_get_min() { return _IR_min; }
+float reading::_get_max() { return _IR_max; }
 float reading::_get_mean()
 {
-    if (READ_reads)
+    int RetVal = _IR_pile;
+
+    if (_IR_reads)
     {
-        READ_mean /= READ_reads;
-        READ_reads = 0;
+        RetVal = _IR_pile / _IR_reads;
     }
 
-    return READ_mean;
+    return RetVal;
 }
 
 // --------------------------------
 // POWERTESTER - Public
 // --------------------------------
 
-powertester::powertester(int i2c_address, const char *Id) : shunt_mV("mV"), bus_V(), load_V(), current_Ma("mA"), power_mW("mW"), _Address(i2c_address), _DataRead(INAREAD_CURRENT)
+powertester::powertester(int i2c_address, const char *Id) : _Address(i2c_address)
 {
+    // Initalizing Reading
+    _Readings = {reading("mV"), reading(), reading(), reading("mA"), reading("mW")};
+
+    // Initialize Read Mode
+    _ReadMask.reset();
+    _ReadMask.set(IR_CURR);
+
+    // Setting Powertester Identificator
     strncpy(_Id, Id, 8);
 }
 
-void powertester::setup()
+bool powertester::setup()
 {
-    // Initalize tester chip
-    if (begin())
+    // Initalizing INA219 chip
+    if (!begin())
     {
         Serial.printf("* INA219 chip (Addr: %X) ....................... [!!! Init failed !!!]\n", _Address);
-        while (1)
-        {
-            delay(1000);
-        }
+        // while (1)
+        // {
+        //     delay(1000);
+        // }
     }
     Serial.printf("* INA219 chip (Addr: %X) ....................... [Initialized]\n", _Address);
 
+    // Calibrating INA219 chip
     setCalibration_16V_400mA(); // 16V, 400mA range (higher precision on volts and amps):
     Serial.printf("* INA219 chip (Addr: %X) ....................... [Set: : 16V, 400mA range]\n", _Address);
+
+    return (true);
 }
 
-void powertester::SetReading(DataTable Bitmap = INAREAD_CURRENT)
+void powertester::SetReading(DataTable Bitmap = IR_CURR)
 {
-    _DataRead = Bitmap;
+    _ReadMask.reset();
+    _ReadMask.set(Bitmap);
 }
 
-void powertester::update(ReadingMode Rm = INAMODE_RECURRENT)
+void powertester::update(ReadingMode Rm = IM_RECURR)
 {
-    uint16_t Dr = _DataRead;
+    std::bitset<8> LocalReadMask = _ReadMask;
+
     float BusVoltage = 0;
     float ShuntVoltage = 0;
 
+    // Check if is a recurrent read || reverse bitmap
     if (Rm)
     {
-        Dr ^= Dr; // Invert Reading Mask for Sparse Readings
+        LocalReadMask = ~_ReadMask;
     }
-    if ((Dr && INAREAD_BUS) || (Dr && INAREAD_LOAD))
+
+    // Make every read, if Requested ...
+    if ((LocalReadMask[IR_BUS]) || (LocalReadMask[IR_LOAD]))
     {
         BusVoltage = getBusVoltage_V();
     }
-    if ((Dr && INAREAD_SHUNT) || (Dr && INAREAD_LOAD))
+    if ((LocalReadMask[IR_SHNT]) || (LocalReadMask[IR_LOAD]))
     {
         ShuntVoltage = getShuntVoltage_mV();
     }
-    if (Dr && INAREAD_SHUNT)
+    if (LocalReadMask[IR_SHNT])
     {
-        shunt_mV.set(ShuntVoltage);
+        _Readings.at(IR_SHNT).set(ShuntVoltage);
     }
-    if (Dr && INAREAD_BUS)
+    if (LocalReadMask[IR_BUS])
     {
-        bus_V.set(BusVoltage);
+        _Readings.at(IR_BUS).set(BusVoltage);
     }
-    if (Dr && INAREAD_LOAD)
+    if (LocalReadMask[IR_LOAD])
     {
-        load_V.set(BusVoltage + (ShuntVoltage / 1000));
+        _Readings.at(IR_LOAD).set(BusVoltage + (ShuntVoltage / 1000));
     }
-    if (Dr && INAREAD_CURRENT)
+    if (LocalReadMask[IR_CURR])
     {
-        current_Ma.set(getCurrent_mA());
+        _Readings.at(IR_CURR).set(getCurrent_mA());
     }
-    if (Dr && INAREAD_POWER)
+    if (LocalReadMask[IR_PWR])
     {
-        power_mW.set(getPower_mW());
+        _Readings.at(IR_PWR).set(getPower_mW());
     }
 }
 
 void powertester::display(Stream *S)
 {
-    update(INAMODE_SPARSE);
+    update(IM_SPARSE);
 
-    S->printf("%s: ", _Id);
-    shunt_mV.display(S);
-    bus_V.display(S);
-    load_V.display(S);
-    current_Ma.display(S);
-    power_mW.display(S);
-
+    S->printf("--> %s: ", _Id);
+    for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
+    {
+        it->display(S);
+    }
     S->println("");
 }
 

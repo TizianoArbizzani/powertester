@@ -4,19 +4,22 @@
 #include "Arduino.h"
 #include <Adafruit_INA219.h>
 
+#include <array>
+#include <bitset>
+
 enum DataTable
 {
-    INAREAD_SHUNT = 1,
-    INAREAD_BUS = 2,
-    INAREAD_LOAD = 4,
-    INAREAD_CURRENT = 8,
-    INAREAD_POWER = 16
+    IR_SHNT = 0, // Read Shunt Voltage
+    IR_BUS,      // Read Bus Voltage
+    IR_LOAD,     // Read Load Voltage
+    IR_CURR,     // Read Load Current
+    IR_PWR       // Read Load Power
 };
 
 enum ReadingMode
 {
-    INAMODE_RECURRENT = 0,
-    INAMODE_SPARSE = 1,
+    IM_RECURR = 0, // Read everytime you can
+    IM_SPARSE,     // Read at display refresh only
 };
 
 class reading
@@ -34,31 +37,28 @@ private:
     float _get_mean();
     int _get_reads();
 
-    char _Unit[8] = {0};
+    char _Unit[8] = {0}; // Measurement unit label
 
-    float READ_min, READ_mean, READ_max;
-    int READ_reads;
+    float _IR_min;  // Minimum value read
+    float _IR_pile; // Values pile
+    float _IR_max;  // Maximum value read
+    int _IR_reads;  // Number of readings
 };
 
 class powertester : public Adafruit_INA219
 {
 public:
     powertester(int i2c_address, const char *Id);
-    void setup();
+    bool setup();
     void update(ReadingMode Rm);
     void SetReading(DataTable Bitmap);
     void display(Stream *S);
 
-    reading shunt_mV;
-    reading bus_V;
-    reading load_V;
-    reading current_Ma;
-    reading power_mW;
-
 private:
     char _Id[8];
     int _Address;
-    uint16_t _DataRead;
+    std::bitset<8> _ReadMask;
+    std::array<reading, 5> _Readings;
 };
 
 #endif
