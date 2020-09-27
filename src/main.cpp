@@ -3,13 +3,13 @@
 #include <TFT_eSPI.h>
 #include <powertester.h>
 
-powertester PT_Left(0x40);
-powertester PT_Right(0x41);
+powertester PT_Left(0x40, "Sx");
+powertester PT_Right(0x41, "Dx");
+
 TFT_eSPI tft = TFT_eSPI();
 
 const int PrintEvery = 1000;
 
-unsigned long NextSample;
 unsigned long NextPrint;
 
 void setup(void)
@@ -18,11 +18,10 @@ void setup(void)
   // Setup Start
   //-----------------------------------------------
 
-  Serial.begin(115200);
+  Serial.begin(921600);
   while (!Serial)
   {
-    // will pause Zero, Leonardo, etc until serial console opens
-    delay(1);
+    delay(1); // will pause Zero, Leonardo, etc until serial console opens
   }
 
   Serial.println("* Esp32GetCurrent Operations ................... [Start]");
@@ -35,10 +34,14 @@ void setup(void)
   PT_Left.SetReading(INAREAD_CURRENT);
   PT_Right.SetReading(INAREAD_CURRENT);
 
+  Serial.println("* INA219 : Verify correct object initialization  [*** Start ***]");
+
+  PT_Left.display(&Serial);
+  PT_Right.display(&Serial);
+
   Serial.println("* INA219 : Measuring voltage and current ....... [*** Sampling Start ***]");
 
-  NextSample = millis();
-  NextPrint = millis();
+  NextPrint = millis() + PrintEvery;
 }
 
 void loop(void)
