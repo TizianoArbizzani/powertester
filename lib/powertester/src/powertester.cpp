@@ -7,10 +7,10 @@
 // --------------------------------
 // READING - Public
 // --------------------------------
-
-reading::reading(const char *Unit) : _IR_min(1), _IR_pile(0), _IR_max(-1), _IR_reads(0), _focus(false)
+reading::reading(const char *Label, const char *Unit) : _IR_min(1), _IR_pile(0), _IR_max(-1), _IR_reads(0), _focus(false)
 {
     strncpy(_Unit, Unit, 8);
+    strncpy(_Label, Label, 4);
 }
 
 void reading::reset()
@@ -40,11 +40,15 @@ void reading::set(float ReadData)
 
 void reading::display(Stream *S)
 {
-    S->printf("%s%06d:%5.2f;%5.2f;%5.2f%s%s ",
-              _focus ? "<<" : "[[",
-              _get_reads(), _get_min(), _get_mean(), _get_max(),
-              _Unit,
-              _focus ? ">>" : "]]");
+    S->printf("%s%s:", _focus ? "<" : "[", _Label);
+
+    if (_focus)
+    {
+        S->printf("(%03d) ", _get_reads());
+    }
+
+    S->printf("%5.2f;%5.2f;%5.2f %s%s ", _get_min(), _get_mean(), _get_max(), _Unit, _focus ? ">" : "]");
+
     reset();
 }
 
@@ -53,6 +57,7 @@ bool reading::setFocus(bool Focus = true)
     _focus = Focus;
     return (_focus);
 }
+
 bool reading::hasFocus() { return (_focus); }
 
 // --------------------------------
@@ -60,8 +65,11 @@ bool reading::hasFocus() { return (_focus); }
 // --------------------------------
 
 int reading::_get_reads() { return _IR_reads; }
+
 float reading::_get_min() { return _IR_min; }
+
 float reading::_get_max() { return _IR_max; }
+
 float reading::_get_mean()
 {
     int RetVal = _IR_pile;
@@ -81,7 +89,7 @@ float reading::_get_mean()
 powertester::powertester(int i2c_address, const char *Id) : _Address(i2c_address)
 {
     // Initalizing Reading
-    _Readings = {reading("mV"), reading(), reading(), reading("mA"), reading("mW")};
+    _Readings = {reading("Shn", "mV"), reading("Bus"), reading("Loa"), reading("Cur", "mA"), reading("Pwr", "mW")};
 
     // Initialize Read Mode
     _ReadMask.reset();
@@ -119,15 +127,11 @@ void powertester::SetReading(int Bitmap = IR_CURR)
     std::bitset<32> TBS(Bitmap);
     _ReadMask = TBS;
 
-    //std::cout << "---> ReadMask: [" << _ReadMask << "] Temporary: [" << TBS << "]" << std::endl;
-
     // Set New Readings Focus()
     for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
     {
         it->setFocus(_ReadMask[i++]);
     }
-
-    //sleep(10000);
 }
 
 void powertester::update(uint16_t Rm = IM_RECURR)
