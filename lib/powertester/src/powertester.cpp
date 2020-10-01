@@ -4,10 +4,12 @@
 // #include <iostream>
 // std::cout << "---> Rm: (" << Rm << ") GRM: [" << _ReadMask << "] LRM: [" << LocalReadMask << "]" << std::endl;
 
+static void _PrSet(int Value, PrintRead *Pr);
+
 // --------------------------------
 // READING - Public
 // --------------------------------
-reading::reading(const char *Label, const char *Unit) : _IR_min(1), _IR_pile(0), _IR_max(-1), _IR_reads(0), _focus(false)
+reading::reading(const char *Label, const char *Unit) : _IR_min(R_DEF_MIN), _IR_pile(R_DEF_PILE), _IR_max(R_DEF_MAX), _IR_reads(R_DEF_READS), _focus(false)
 {
     strncpy(_Unit, Unit, 8);
     strncpy(_Label, Label, 4);
@@ -15,10 +17,10 @@ reading::reading(const char *Label, const char *Unit) : _IR_min(1), _IR_pile(0),
 
 void reading::reset()
 {
-    _IR_max = -1;
-    _IR_pile = 0;
-    _IR_min = 1;
-    _IR_reads = 0;
+    _IR_max = R_DEF_MAX;
+    _IR_pile = R_DEF_PILE;
+    _IR_min = R_DEF_MIN;
+    _IR_reads = R_DEF_READS;
 }
 
 void reading::set(float ReadData)
@@ -40,6 +42,14 @@ void reading::set(float ReadData)
 
 void reading::display(Stream *S)
 {
+    PrintRead PrMin;
+    PrintRead PrMean;
+    PrintRead PrMax;
+
+    _PrSet(_get_min(), &PrMin);
+    _PrSet(_get_mean(), &PrMean);
+    _PrSet(_get_max(), &PrMax);
+
     S->printf("%s%s:", _focus ? "<" : "[", _Label);
 
     if (_focus)
@@ -47,7 +57,11 @@ void reading::display(Stream *S)
         S->printf("(%03d) ", _get_reads());
     }
 
-    S->printf("%5.2f;%5.2f;%5.2f %s%s ", _get_min(), _get_mean(), _get_max(), _Unit, _focus ? ">" : "]");
+    S->printf("%c%s.%s;%c%s.%s;%c%s.%s %s%s ",
+              PrMin.Sign, PrMin.Int, PrMin.Fract,
+              PrMean.Sign, PrMean.Int, PrMean.Fract,
+              PrMax.Sign, PrMax.Int, PrMax.Fract,
+              _Unit, _focus ? ">" : "]");
 
     reset();
 }
@@ -66,11 +80,11 @@ bool reading::hasFocus() { return (_focus); }
 
 int reading::_get_reads() { return _IR_reads; }
 
-float reading::_get_min() { return _IR_min; }
+int reading::_get_min() { return _IR_min; }
 
-float reading::_get_max() { return _IR_max; }
+int reading::_get_max() { return _IR_max; }
 
-float reading::_get_mean()
+int reading::_get_mean()
 {
     int RetVal = _IR_pile;
 
@@ -86,10 +100,10 @@ float reading::_get_mean()
 // POWERTESTER - Public
 // --------------------------------
 
-powertester::powertester(int i2c_address, const char *Id) : _Address(i2c_address)
+powertester::powertester(uint8_t i2c_address, const char *Id) : Adafruit_INA219(i2c_address), _Address(i2c_address)
 {
     // Initalizing Reading
-    _Readings = {reading("Shn", "mV"), reading("Bus"), reading("Loa"), reading("Cur", "mA"), reading("Pwr", "mW")};
+    _Readings = {reading("SH", "mV"), reading("BU"), reading("LD"), reading("CU", "mA"), reading("PW", "mW")};
 
     // Initialize Read Mode
     _ReadMask.reset();
@@ -138,8 +152,8 @@ void powertester::update(uint16_t Rm = IM_RECURR)
 {
     std::bitset<32> LocalReadMask = _ReadMask;
 
-    float BusVoltage = 0;
-    float ShuntVoltage = 0;
+    int BusVoltage = 0;
+    int ShuntVoltage = 0;
 
     // Check if is a recurrent read || reverse bitmap
     LocalReadMask = Rm ? ~_ReadMask : _ReadMask;
@@ -147,11 +161,11 @@ void powertester::update(uint16_t Rm = IM_RECURR)
     // Make every read, if Requested ...
     if ((LocalReadMask[IR_BUS]) || (LocalReadMask[IR_LOAD]))
     {
-        BusVoltage = _Active ? getBusVoltage_V() : 0;
+        BusVoltage = _Active ? getBusVoltage_V() * READ_COEFF : 0;
     }
     if ((LocalReadMask[IR_SHNT]) || (LocalReadMask[IR_LOAD]))
     {
-        ShuntVoltage = _Active ? getShuntVoltage_mV() : 0;
+        ShuntVoltage = _Active ? getShuntVoltage_mV() * READ_COEFF : 0;
     }
 
     if (LocalReadMask[IR_SHNT])
@@ -168,11 +182,11 @@ void powertester::update(uint16_t Rm = IM_RECURR)
     }
     if (LocalReadMask[IR_CURR])
     {
-        _Readings.at(IR_CURR).set(_Active ? getCurrent_mA() : 0);
+        _Readings.at(IR_CURR).set(_Active ? getCurrent_mA() * READ_COEFF : 0);
     }
     if (LocalReadMask[IR_PWR])
     {
-        _Readings.at(IR_PWR).set(_Active ? getPower_mW() : 0);
+        _Readings.at(IR_PWR).set(_Active ? getPower_mW() * READ_COEFF : 0);
     }
 }
 
@@ -180,7 +194,7 @@ void powertester::display(Stream *S)
 {
     update(IM_SPARSE);
 
-    S->printf("--> %s: ", _Id);
+    S->printf("%s ", _Id);
     for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
     {
         it->display(S);
@@ -191,3 +205,22 @@ void powertester::display(Stream *S)
 // --------------------------------
 // READING - Public
 // --------------------------------
+
+// --------------------------------
+// Static functions
+// --------------------------------
+/**
+ * @brief Convert an integer reac to a quasi-float value ...
+ * 
+ * @param[in] Value Integer value to be converted
+ * @param[out] Pr Structure containing the value coverted for display
+ */
+static void _PrSet(int Value, PrintRead *Pr)
+{
+    int Ip = abs(Value) / READ_COEFF;
+    int Fp = abs(Value) % READ_COEFF;
+
+    Pr->Sign = (Value <= 0) ? '-' : ' ';
+    snprintf(Pr->Int, INT_SIZE, "%2d", Ip);
+    snprintf(Pr->Fract, FRACT_SIZE, "%03d", Fp);
+}

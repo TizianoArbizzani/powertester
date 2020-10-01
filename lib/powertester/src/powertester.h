@@ -7,6 +7,23 @@
 #include <array>
 #include <bitset>
 
+/** @name Substruct Size
+ *  String size for PrintRead Struct
+ */
+///@{
+#define INT_SIZE 3   //!<Size of PrintRead Structure Integer Subpart
+#define FRACT_SIZE 4 //!<Size of PrintRead Structure Fractional Subpart
+///@}
+
+/** @struct PrintRead
+   */
+typedef struct
+{
+    char Sign;              //!< The sign of the reading
+    char Int[INT_SIZE];     //!< The integer part of the reading
+    char Fract[FRACT_SIZE]; //!< The fractional part of the reading
+} PrintRead;
+
 /** @name Macros
  *  Useful macro defnition
  */
@@ -70,21 +87,21 @@ private:
     /**
      * @brief 
      * 
-     * @return float 
+     * @return int 
      */
-    float _get_min();
+    int _get_min();
     /**
      * @brief 
      * 
-     * @return float 
+     * @return int 
      */
-    float _get_max();
+    int _get_max();
     /**
      * @brief 
      * 
-     * @return float 
+     * @return int 
      */
-    float _get_mean();
+    int _get_mean();
     /**
      * @brief 
      * 
@@ -95,10 +112,10 @@ private:
     char _Unit[8] = {0};  ///!< Measurement unit
     char _Label[4] = {0}; ///!< Data to be read
 
-    float _IR_min;  //!< Minimum value read
-    float _IR_pile; //!< Values pile
-    float _IR_max;  //!< Maximum value read
-    int _IR_reads;  //!< Number of readings
+    int _IR_min;   //!< Minimum value read
+    int _IR_pile;  //!< Values pile
+    int _IR_max;   //!< Maximum value read
+    int _IR_reads; //!< Number of readings
 
     bool _focus; //!< This is the current focused reading
 };
@@ -116,12 +133,24 @@ private:
 ///@}
 
 /** @name Reading Modes
- *  @par What kind of update is to be done.
- *  @par To speed up things ...
+ *  What kind of update is to be done.
+ * 
+ *  To speed up things ...
  */
 ///@{
 #define IM_RECURR 0 //!<Read everytime you can
 #define IM_SPARSE 1 //!<Read at display refresh only
+///@}
+
+/** @name Reading Defaults
+ *  Default values for Reading fields
+ */
+///@{
+#define R_DEF_READS 0      //!<Default Read Number
+#define R_DEF_MIN 1000000  //!<Default MINIMUM Read
+#define R_DEF_PILE 0       //!<Default PILE Value
+#define R_DEF_MAX -1000000 //!<Default MINIMUM Read
+#define READ_COEFF 1000    //!<Use three decimals
 ///@}
 
 /*! 
@@ -142,7 +171,7 @@ public:
      * @param[in] i2c_address I2C Address of INA219 chip
      * @param[in] Id INA219 chip Textual label (debug purposes)
      */
-    powertester(int i2c_address, const char *Id);
+    powertester(uint8_t i2c_address, const char *Id);
     /**
      * @brief Initialize INA219 chip
      * 
