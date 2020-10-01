@@ -1,0 +1,190 @@
+\doxysection{Riferimenti per la classe powertester}
+\label{a00019}\index{powertester@{powertester}}
+
+
+Main Power\+Tester class,.  
+
+
+
+
+{\ttfamily \#include $<$powertester.\+h$>$}
+
+
+
+Diagramma delle classi per powertester\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=166pt]{a00018}
+\end{center}
+\end{figure}
+
+
+Diagramma di collaborazione per powertester\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=166pt]{a00017}
+\end{center}
+\end{figure}
+\doxysubsection*{Membri pubblici}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ powertester} (uint8\+\_\+t i2c\+\_\+address, const char $\ast$Id, int Xoff)
+\begin{DoxyCompactList}\small\item\em Construct a new powertester object. \end{DoxyCompactList}\item 
+bool \textbf{ setup} ()
+\begin{DoxyCompactList}\small\item\em Initialize I\+N\+A219 chip. \end{DoxyCompactList}\item 
+void \textbf{ update} (uint16\+\_\+t Rm)
+\begin{DoxyCompactList}\small\item\em Read a new dataset. \end{DoxyCompactList}\item 
+void \textbf{ Set\+Reading} (int Bitmap)
+\begin{DoxyCompactList}\small\item\em Set the Reading object. \end{DoxyCompactList}\item 
+void \textbf{ display} (Stream $\ast$S)
+\begin{DoxyCompactList}\small\item\em Read the requested data. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Descrizione dettagliata}
+Main Power\+Tester class,. 
+
+This class is used to demonstrate a number of section commands. \begin{DoxyAuthor}{Autore}
+Tiziano Arbizzani {\texttt{ tiziano.\+arbizzani@gmail.\+com}} 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Versione}
+0.\+0.\+1a 
+\end{DoxyVersion}
+\begin{DoxyDate}{Data}
+2020 
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+G\+NU Public License. 
+\end{DoxyCopyright}
+\begin{DoxySeeAlso}{Si veda anche}
+Further documentation. 
+\end{DoxySeeAlso}
+
+
+Definizione alla linea 168 del file powertester.\+h.
+
+
+
+\doxysubsection{Documentazione dei costruttori e dei distruttori}
+\mbox{\label{a00019_a525e2d090c40082b918c8b6278a46b89}} 
+\index{powertester@{powertester}!powertester@{powertester}}
+\index{powertester@{powertester}!powertester@{powertester}}
+\doxysubsubsection{powertester()}
+{\footnotesize\ttfamily powertester\+::powertester (\begin{DoxyParamCaption}\item[{uint8\+\_\+t}]{i2c\+\_\+address,  }\item[{const char $\ast$}]{Id,  }\item[{int}]{Xoff }\end{DoxyParamCaption})}
+
+
+
+Construct a new powertester object. 
+
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em i2c\+\_\+address} & I2C Address of I\+N\+A219 chip \\
+\hline
+\mbox{\texttt{ in}}  & {\em Id} & I\+N\+A219 chip Textual label (debug purposes) \\
+\hline
+\end{DoxyParams}
+
+
+Definizione alla linea 104 del file powertester.\+cpp.
+
+
+
+\doxysubsection{Documentazione delle funzioni membro}
+\mbox{\label{a00019_a4109674776762f8a7d3ef024aec77e22}} 
+\index{powertester@{powertester}!display@{display}}
+\index{display@{display}!powertester@{powertester}}
+\doxysubsubsection{display()}
+{\footnotesize\ttfamily void powertester\+::display (\begin{DoxyParamCaption}\item[{Stream $\ast$}]{S }\end{DoxyParamCaption})}
+
+
+
+Read the requested data. 
+
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em S} & The Stream in use for the output \\
+\hline
+\end{DoxyParams}
+
+
+Definizione alla linea 193 del file powertester.\+cpp.
+
+Questo è il grafo delle chiamate per questa funzione\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=322pt]{a00019_a4109674776762f8a7d3ef024aec77e22_cgraph}
+\end{center}
+\end{figure}
+\mbox{\label{a00019_a8ec260c8827eee0cf06a39324b8e57ea}} 
+\index{powertester@{powertester}!SetReading@{SetReading}}
+\index{SetReading@{SetReading}!powertester@{powertester}}
+\doxysubsubsection{SetReading()}
+{\footnotesize\ttfamily void powertester\+::\+Set\+Reading (\begin{DoxyParamCaption}\item[{int}]{Bitmap = {\ttfamily \textbf{ I\+R\+\_\+\+C\+U\+RR}} }\end{DoxyParamCaption})}
+
+
+
+Set the Reading object. 
+
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em Bitmap} & The type of requested reading (bus voltage, shunt voltage, load current, load power) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyAttention}{Attenzione}
+Setting the type of request reading (using Readings definitions), \doxyref{R\+S(x)}{pag.}{a00005_af70a81ec484eb8a126ed426915646373} macro must be used ... 
+\end{DoxyAttention}
+
+
+Definizione alla linea 137 del file powertester.\+cpp.
+
+\mbox{\label{a00019_a4b7b193d7ebd289c07d38bbbb171a426}} 
+\index{powertester@{powertester}!setup@{setup}}
+\index{setup@{setup}!powertester@{powertester}}
+\doxysubsubsection{setup()}
+{\footnotesize\ttfamily bool powertester\+::setup (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Initialize I\+N\+A219 chip. 
+
+\begin{DoxyAttention}{Attenzione}
+Double check I2C connections 
+\end{DoxyAttention}
+
+
+Definizione alla linea 116 del file powertester.\+cpp.
+
+\mbox{\label{a00019_ad22695127c1e0d2d1bafce36724605ce}} 
+\index{powertester@{powertester}!update@{update}}
+\index{update@{update}!powertester@{powertester}}
+\doxysubsubsection{update()}
+{\footnotesize\ttfamily void powertester\+::update (\begin{DoxyParamCaption}\item[{uint16\+\_\+t}]{Rm = {\ttfamily \textbf{ I\+M\+\_\+\+R\+E\+C\+U\+RR}} }\end{DoxyParamCaption})}
+
+
+
+Read a new dataset. 
+
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em Rm} & High Speed Reading or read on refresh only \\
+\hline
+\end{DoxyParams}
+
+
+Definizione alla linea 151 del file powertester.\+cpp.
+
+Questo è il grafo dei chiamanti di questa funzione\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=322pt]{a00019_ad22695127c1e0d2d1bafce36724605ce_icgraph}
+\end{center}
+\end{figure}
+
+
+La documentazione per questa classe è stata generata a partire dai seguenti file\+:\begin{DoxyCompactItemize}
+\item 
+src/\textbf{ powertester.\+h}\item 
+src/\textbf{ powertester.\+cpp}\end{DoxyCompactItemize}

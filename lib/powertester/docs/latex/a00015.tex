@@ -1,0 +1,179 @@
+\doxysection{Riferimenti per la classe reading}
+\label{a00015}\index{reading@{reading}}
+
+
+Readings class.  
+
+
+
+
+{\ttfamily \#include $<$powertester.\+h$>$}
+
+\doxysubsection*{Membri pubblici}
+\begin{DoxyCompactItemize}
+\item 
+\textbf{ reading} (const char $\ast$Label=\char`\"{}Unk\char`\"{}, const char $\ast$Unit=\char`\"{}V\char`\"{})
+\begin{DoxyCompactList}\small\item\em Construct a new reading object. \end{DoxyCompactList}\item 
+void \textbf{ reset} ()
+\begin{DoxyCompactList}\small\item\em Reset reading to default (empty) values. \end{DoxyCompactList}\item 
+void \textbf{ set} (float Read\+Data)
+\begin{DoxyCompactList}\small\item\em Executes a reading and save it to object properties. \end{DoxyCompactList}\item 
+void \textbf{ display} (Stream $\ast$S, int Xoff)
+\begin{DoxyCompactList}\small\item\em Show single data reading. \end{DoxyCompactList}\item 
+bool \textbf{ has\+Focus} ()
+\item 
+bool \textbf{ set\+Focus} (bool Focus)
+\begin{DoxyCompactList}\small\item\em Set the Focus to this reading. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Descrizione dettagliata}
+Readings class. 
+
+A single I\+N\+A219 Reading \begin{DoxyAuthor}{Autore}
+Tiziano Arbizzani {\texttt{ tiziano.\+arbizzani@gmail.\+com}} 
+\end{DoxyAuthor}
+\begin{DoxyVersion}{Versione}
+0.\+0.\+1a 
+\end{DoxyVersion}
+\begin{DoxyDate}{Data}
+2020 
+\end{DoxyDate}
+\begin{DoxyCopyright}{Copyright}
+G\+NU Public License. 
+\end{DoxyCopyright}
+\begin{DoxyRemark}{Osservazioni}
+Further documentation. 
+\end{DoxyRemark}
+
+
+Definizione alla linea 43 del file powertester.\+h.
+
+
+
+\doxysubsection{Documentazione dei costruttori e dei distruttori}
+\mbox{\label{a00015_ab22f66e8cbcdb87cc5f1c69331aa83f6}} 
+\index{reading@{reading}!reading@{reading}}
+\index{reading@{reading}!reading@{reading}}
+\doxysubsubsection{reading()}
+{\footnotesize\ttfamily reading\+::reading (\begin{DoxyParamCaption}\item[{const char $\ast$}]{Label = {\ttfamily \char`\"{}Unk\char`\"{}},  }\item[{const char $\ast$}]{Unit = {\ttfamily \char`\"{}V\char`\"{}} }\end{DoxyParamCaption})}
+
+
+
+Construct a new reading object. 
+
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em Label} & Data to be read \\
+\hline
+\mbox{\texttt{ in}}  & {\em Unit} & Data measurement unit \\
+\hline
+\end{DoxyParams}
+
+
+Definizione alla linea 12 del file powertester.\+cpp.
+
+
+
+\doxysubsection{Documentazione delle funzioni membro}
+\mbox{\label{a00015_a4693087290535f4bd87a29b0baef6f1c}} 
+\index{reading@{reading}!display@{display}}
+\index{display@{display}!reading@{reading}}
+\doxysubsubsection{display()}
+{\footnotesize\ttfamily void reading\+::display (\begin{DoxyParamCaption}\item[{Stream $\ast$}]{S,  }\item[{int}]{Xoff }\end{DoxyParamCaption})}
+
+
+
+Show single data reading. 
+
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em S} & Stream accepting data \\
+\hline
+\mbox{\texttt{ in}}  & {\em Xoff} & Offset in L\+CD Display \\
+\hline
+\end{DoxyParams}
+
+
+Definizione alla linea 43 del file powertester.\+cpp.
+
+\mbox{\label{a00015_af172c214251596106abe05127bd5d220}} 
+\index{reading@{reading}!hasFocus@{hasFocus}}
+\index{hasFocus@{hasFocus}!reading@{reading}}
+\doxysubsubsection{hasFocus()}
+{\footnotesize\ttfamily bool reading\+::has\+Focus (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\begin{DoxyReturn}{Restituisce}
+true 
+
+false 
+\end{DoxyReturn}
+
+
+Definizione alla linea 76 del file powertester.\+cpp.
+
+\mbox{\label{a00015_af482737a8c57bcfaa5360bcef3ba44eb}} 
+\index{reading@{reading}!reset@{reset}}
+\index{reset@{reset}!reading@{reading}}
+\doxysubsubsection{reset()}
+{\footnotesize\ttfamily void reading\+::reset (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Reset reading to default (empty) values. 
+
+
+
+Definizione alla linea 18 del file powertester.\+cpp.
+
+\mbox{\label{a00015_a9427245e1a66d30ffe73d90d57e55444}} 
+\index{reading@{reading}!set@{set}}
+\index{set@{set}!reading@{reading}}
+\doxysubsubsection{set()}
+{\footnotesize\ttfamily void reading\+::set (\begin{DoxyParamCaption}\item[{float}]{Read\+Data }\end{DoxyParamCaption})}
+
+
+
+Executes a reading and save it to object properties. 
+
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em Read\+Data} & Data read to be saved \\
+\hline
+\end{DoxyParams}
+
+
+Definizione alla linea 26 del file powertester.\+cpp.
+
+\mbox{\label{a00015_a1c5f63caa58de4d5a05cc2f6c142f373}} 
+\index{reading@{reading}!setFocus@{setFocus}}
+\index{setFocus@{setFocus}!reading@{reading}}
+\doxysubsubsection{setFocus()}
+{\footnotesize\ttfamily bool reading\+::set\+Focus (\begin{DoxyParamCaption}\item[{bool}]{Focus = {\ttfamily true} }\end{DoxyParamCaption})}
+
+
+
+Set the Focus to this reading. 
+
+\begin{DoxyRemark}{Osservazioni}
+A focused reading is displayed at the center of lcd and is under hispeed sampling
+\end{DoxyRemark}
+
+\begin{DoxyParams}[1]{Parametri}
+\mbox{\texttt{ in}}  & {\em Focus} & Is this field under focus \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Restituisce}
+true Focus is now set 
+
+false Focus in now unset 
+\end{DoxyReturn}
+
+
+Definizione alla linea 70 del file powertester.\+cpp.
+
+
+
+La documentazione per questa classe è stata generata a partire dai seguenti file\+:\begin{DoxyCompactItemize}
+\item 
+src/\textbf{ powertester.\+h}\item 
+src/\textbf{ powertester.\+cpp}\end{DoxyCompactItemize}

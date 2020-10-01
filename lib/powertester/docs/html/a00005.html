@@ -1,0 +1,481 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.20"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Arduino ESP32 PSU: Riferimenti per il file src/powertester.h</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="Arduino_ESP32.jpg"/></td>
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">Arduino ESP32 PSU
+   &#160;<span id="projectnumber">0.01b</span>
+   </div>
+   <div id="projectbrief">A double Power Supply Unit controlled by Esp32 and INA219</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Generato da Doxygen 1.8.20 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'Cerca');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','Cerca');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(document).ready(function(){initNavTree('a00005.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+<div class="header">
+  <div class="summary">
+<a href="#nested-classes">Composti</a>  </div>
+  <div class="headertitle">
+<div class="title">Riferimenti per il file powertester.h</div>  </div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><code>#include &quot;Arduino.h&quot;</code><br />
+<code>#include &lt;Adafruit_INA219.h&gt;</code><br />
+<code>#include &lt;array&gt;</code><br />
+<code>#include &lt;bitset&gt;</code><br />
+</div><div class="textblock"><div class="dynheader">
+Grafo delle dipendenze di inclusione per powertester.h:</div>
+<div class="dyncontent">
+<div class="center"><img src="a00006.png" border="0" usemap="#asrc_2powertester_8h" alt=""/></div>
+<map name="src_2powertester_8h" id="src_2powertester_8h">
+<area shape="rect" title=" " alt="" coords="165,5,288,32"/>
+<area shape="rect" title=" " alt="" coords="5,80,83,107"/>
+<area shape="rect" title=" " alt="" coords="107,80,234,107"/>
+<area shape="rect" title=" " alt="" coords="259,80,309,107"/>
+<area shape="rect" title=" " alt="" coords="334,80,389,107"/>
+</map>
+</div>
+</div><div class="textblock"><div class="dynheader">
+Questo grafo mostra quali altri file includono direttamente o indirettamente questo file:</div>
+<div class="dyncontent">
+<div class="center"><img src="a00007.png" border="0" usemap="#asrc_2powertester_8hdep" alt=""/></div>
+<map name="src_2powertester_8hdep" id="src_2powertester_8hdep">
+<area shape="rect" title=" " alt="" coords="12,5,135,32"/>
+<area shape="rect" href="a00002.html" title=" " alt="" coords="5,80,141,107"/>
+</map>
+</div>
+</div>
+<p><a href="a00005_source.html">Vai al codice sorgente di questo file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Composti</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00011.html">PrintRead</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00015.html">reading</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Readings class.  <a href="a00015.html#details">Continua...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00019.html">powertester</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main PowerTester class,.  <a href="a00019.html#details">Continua...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
+Definizioni</h2></td></tr>
+<tr><td colspan="2"><div class="groupHeader">Substruct Size</div></td></tr>
+<tr><td colspan="2"><div class="groupText"><p>String size for <a class="el" href="a00011.html">PrintRead</a> Struct </p>
+</div></td></tr>
+<tr class="memitem:a3ac36dd0f02f263e5966ac1d1ecbd1bd"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a3ac36dd0f02f263e5966ac1d1ecbd1bd">INT_SIZE</a>&#160;&#160;&#160;3</td></tr>
+<tr class="memdesc:a3ac36dd0f02f263e5966ac1d1ecbd1bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of <a class="el" href="a00011.html">PrintRead</a> Structure Integer Subpart.  <a href="a00005.html#a3ac36dd0f02f263e5966ac1d1ecbd1bd">Continua...</a><br /></td></tr>
+<tr class="separator:a3ac36dd0f02f263e5966ac1d1ecbd1bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca1cf339647f5126f0f5838e1dfe0ed5"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#aca1cf339647f5126f0f5838e1dfe0ed5">FRACT_SIZE</a>&#160;&#160;&#160;4</td></tr>
+<tr class="memdesc:aca1cf339647f5126f0f5838e1dfe0ed5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of <a class="el" href="a00011.html">PrintRead</a> Structure Fractional Subpart.  <a href="a00005.html#aca1cf339647f5126f0f5838e1dfe0ed5">Continua...</a><br /></td></tr>
+<tr class="separator:aca1cf339647f5126f0f5838e1dfe0ed5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">Macros</div></td></tr>
+<tr><td colspan="2"><div class="groupText"><p>Useful macro defnition </p>
+</div></td></tr>
+<tr class="memitem:af70a81ec484eb8a126ed426915646373"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#af70a81ec484eb8a126ed426915646373">RS</a>(X)&#160;&#160;&#160;(1 &lt;&lt; X)</td></tr>
+<tr class="memdesc:af70a81ec484eb8a126ed426915646373"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert from position to value.  <a href="a00005.html#af70a81ec484eb8a126ed426915646373">Continua...</a><br /></td></tr>
+<tr class="separator:af70a81ec484eb8a126ed426915646373"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">Readings</div></td></tr>
+<tr><td colspan="2"><div class="groupText"><p>Which data must be read from INA219. </p><dl class="section attention"><dt>Attenzione</dt><dd>Setting the type of request reading, e.g. using <a class="el" href="a00019.html#a8ec260c8827eee0cf06a39324b8e57ea" title="Set the Reading object.">powertester::SetReading()</a> function, <a class="el" href="a00005.html#af70a81ec484eb8a126ed426915646373" title="Convert from position to value.">RS(x)</a> macro must be used ... </dd></dl>
+</div></td></tr>
+<tr class="memitem:a0cc3b031511c5a660506849de717f2a8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a0cc3b031511c5a660506849de717f2a8">IR_SHNT</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:a0cc3b031511c5a660506849de717f2a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Shunt Voltage.  <a href="a00005.html#a0cc3b031511c5a660506849de717f2a8">Continua...</a><br /></td></tr>
+<tr class="separator:a0cc3b031511c5a660506849de717f2a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a287f4e92a55da8c777d8079825c652bf"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a287f4e92a55da8c777d8079825c652bf">IR_BUS</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:a287f4e92a55da8c777d8079825c652bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Bus Voltage.  <a href="a00005.html#a287f4e92a55da8c777d8079825c652bf">Continua...</a><br /></td></tr>
+<tr class="separator:a287f4e92a55da8c777d8079825c652bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae603065cd731a436b4923df06b8f43d6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#ae603065cd731a436b4923df06b8f43d6">IR_LOAD</a>&#160;&#160;&#160;2</td></tr>
+<tr class="memdesc:ae603065cd731a436b4923df06b8f43d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Load Voltage.  <a href="a00005.html#ae603065cd731a436b4923df06b8f43d6">Continua...</a><br /></td></tr>
+<tr class="separator:ae603065cd731a436b4923df06b8f43d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa67c2c5afca9e21b348ac1703304de98"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#aa67c2c5afca9e21b348ac1703304de98">IR_CURR</a>&#160;&#160;&#160;3</td></tr>
+<tr class="memdesc:aa67c2c5afca9e21b348ac1703304de98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Load Current.  <a href="a00005.html#aa67c2c5afca9e21b348ac1703304de98">Continua...</a><br /></td></tr>
+<tr class="separator:aa67c2c5afca9e21b348ac1703304de98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7ae448744dac7b46ef7134b7bd598ba"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#af7ae448744dac7b46ef7134b7bd598ba">IR_PWR</a>&#160;&#160;&#160;4</td></tr>
+<tr class="memdesc:af7ae448744dac7b46ef7134b7bd598ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read Load Power.  <a href="a00005.html#af7ae448744dac7b46ef7134b7bd598ba">Continua...</a><br /></td></tr>
+<tr class="separator:af7ae448744dac7b46ef7134b7bd598ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">Reading Modes</div></td></tr>
+<tr><td colspan="2"><div class="groupText"><p>What kind of update is to be done.</p>
+<p>To speed up things ... </p>
+</div></td></tr>
+<tr class="memitem:a0f0b37c2c097b019009f3458e996d29e"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a0f0b37c2c097b019009f3458e996d29e">IM_RECURR</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:a0f0b37c2c097b019009f3458e996d29e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read everytime you can.  <a href="a00005.html#a0f0b37c2c097b019009f3458e996d29e">Continua...</a><br /></td></tr>
+<tr class="separator:a0f0b37c2c097b019009f3458e996d29e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a765b2063991ab828aecc4815dad09f16"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a765b2063991ab828aecc4815dad09f16">IM_SPARSE</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:a765b2063991ab828aecc4815dad09f16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read at display refresh only.  <a href="a00005.html#a765b2063991ab828aecc4815dad09f16">Continua...</a><br /></td></tr>
+<tr class="separator:a765b2063991ab828aecc4815dad09f16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr><td colspan="2"><div class="groupHeader">Reading Defaults</div></td></tr>
+<tr><td colspan="2"><div class="groupText"><p>Default values for Reading fields </p>
+</div></td></tr>
+<tr class="memitem:a796e9e79d6ce6f7f6590e74117179179"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a796e9e79d6ce6f7f6590e74117179179">R_DEF_READS</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:a796e9e79d6ce6f7f6590e74117179179"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default Read Number.  <a href="a00005.html#a796e9e79d6ce6f7f6590e74117179179">Continua...</a><br /></td></tr>
+<tr class="separator:a796e9e79d6ce6f7f6590e74117179179"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52b6d7a2bc8695df7129b32051dad76a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a52b6d7a2bc8695df7129b32051dad76a">R_DEF_MIN</a>&#160;&#160;&#160;1000000</td></tr>
+<tr class="memdesc:a52b6d7a2bc8695df7129b32051dad76a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default MINIMUM Read.  <a href="a00005.html#a52b6d7a2bc8695df7129b32051dad76a">Continua...</a><br /></td></tr>
+<tr class="separator:a52b6d7a2bc8695df7129b32051dad76a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa191d619c2f9a777d2c77544713fa0e9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#aa191d619c2f9a777d2c77544713fa0e9">R_DEF_PILE</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:aa191d619c2f9a777d2c77544713fa0e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default PILE Value.  <a href="a00005.html#aa191d619c2f9a777d2c77544713fa0e9">Continua...</a><br /></td></tr>
+<tr class="separator:aa191d619c2f9a777d2c77544713fa0e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee36bc2b7df97091c931a7649d905999"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#aee36bc2b7df97091c931a7649d905999">R_DEF_MAX</a>&#160;&#160;&#160;-1000000</td></tr>
+<tr class="memdesc:aee36bc2b7df97091c931a7649d905999"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default MINIMUM Read.  <a href="a00005.html#aee36bc2b7df97091c931a7649d905999">Continua...</a><br /></td></tr>
+<tr class="separator:aee36bc2b7df97091c931a7649d905999"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11d3404b91dbce5fcee466250716d376"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="a00005.html#a11d3404b91dbce5fcee466250716d376">READ_COEFF</a>&#160;&#160;&#160;1000</td></tr>
+<tr class="memdesc:a11d3404b91dbce5fcee466250716d376"><td class="mdescLeft">&#160;</td><td class="mdescRight">Use three decimals.  <a href="a00005.html#a11d3404b91dbce5fcee466250716d376">Continua...</a><br /></td></tr>
+<tr class="separator:a11d3404b91dbce5fcee466250716d376"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
+<h2 class="groupheader">Documentazione delle definizioni</h2>
+<a id="aca1cf339647f5126f0f5838e1dfe0ed5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca1cf339647f5126f0f5838e1dfe0ed5">&#9670;&nbsp;</a></span>FRACT_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define FRACT_SIZE&#160;&#160;&#160;4</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Size of <a class="el" href="a00011.html">PrintRead</a> Structure Fractional Subpart. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00015">15</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a0f0b37c2c097b019009f3458e996d29e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0f0b37c2c097b019009f3458e996d29e">&#9670;&nbsp;</a></span>IM_RECURR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IM_RECURR&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read everytime you can. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00144">144</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a765b2063991ab828aecc4815dad09f16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a765b2063991ab828aecc4815dad09f16">&#9670;&nbsp;</a></span>IM_SPARSE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IM_SPARSE&#160;&#160;&#160;1</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read at display refresh only. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00145">145</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a3ac36dd0f02f263e5966ac1d1ecbd1bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ac36dd0f02f263e5966ac1d1ecbd1bd">&#9670;&nbsp;</a></span>INT_SIZE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define INT_SIZE&#160;&#160;&#160;3</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Size of <a class="el" href="a00011.html">PrintRead</a> Structure Integer Subpart. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00014">14</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a287f4e92a55da8c777d8079825c652bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a287f4e92a55da8c777d8079825c652bf">&#9670;&nbsp;</a></span>IR_BUS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IR_BUS&#160;&#160;&#160;1</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read Bus Voltage. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00132">132</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="aa67c2c5afca9e21b348ac1703304de98"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa67c2c5afca9e21b348ac1703304de98">&#9670;&nbsp;</a></span>IR_CURR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IR_CURR&#160;&#160;&#160;3</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read Load Current. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00134">134</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="ae603065cd731a436b4923df06b8f43d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae603065cd731a436b4923df06b8f43d6">&#9670;&nbsp;</a></span>IR_LOAD</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IR_LOAD&#160;&#160;&#160;2</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read Load Voltage. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00133">133</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="af7ae448744dac7b46ef7134b7bd598ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7ae448744dac7b46ef7134b7bd598ba">&#9670;&nbsp;</a></span>IR_PWR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IR_PWR&#160;&#160;&#160;4</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read Load Power. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00135">135</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a0cc3b031511c5a660506849de717f2a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0cc3b031511c5a660506849de717f2a8">&#9670;&nbsp;</a></span>IR_SHNT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define IR_SHNT&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read Shunt Voltage. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00131">131</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="aee36bc2b7df97091c931a7649d905999"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee36bc2b7df97091c931a7649d905999">&#9670;&nbsp;</a></span>R_DEF_MAX</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define R_DEF_MAX&#160;&#160;&#160;-1000000</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Default MINIMUM Read. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00155">155</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a52b6d7a2bc8695df7129b32051dad76a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52b6d7a2bc8695df7129b32051dad76a">&#9670;&nbsp;</a></span>R_DEF_MIN</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define R_DEF_MIN&#160;&#160;&#160;1000000</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Default MINIMUM Read. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00153">153</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="aa191d619c2f9a777d2c77544713fa0e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa191d619c2f9a777d2c77544713fa0e9">&#9670;&nbsp;</a></span>R_DEF_PILE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define R_DEF_PILE&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Default PILE Value. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00154">154</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a796e9e79d6ce6f7f6590e74117179179"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a796e9e79d6ce6f7f6590e74117179179">&#9670;&nbsp;</a></span>R_DEF_READS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define R_DEF_READS&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Default Read Number. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00152">152</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="a11d3404b91dbce5fcee466250716d376"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11d3404b91dbce5fcee466250716d376">&#9670;&nbsp;</a></span>READ_COEFF</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define READ_COEFF&#160;&#160;&#160;1000</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Use three decimals. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00156">156</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+<a id="af70a81ec484eb8a126ed426915646373"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af70a81ec484eb8a126ed426915646373">&#9670;&nbsp;</a></span>RS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define RS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">X</td><td>)</td>
+          <td>&#160;&#160;&#160;(1 &lt;&lt; X)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convert from position to value. </p>
+
+<p class="definition">Definizione alla linea <a class="el" href="a00005_source.html#l00031">31</a> del file <a class="el" href="a00005_source.html">powertester.h</a>.</p>
+
+</div>
+</div>
+</div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="a00005.html">powertester.h</a></li>
+    <li class="footer">Generato da <a href="http://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.8.20 </li>
+  </ul>
+</div>
+</body>
+</html>

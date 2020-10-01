@@ -1,0 +1,298 @@
+\doxysection{Riferimenti per il file src/powertester.h}
+\label{a00005}\index{src/powertester.h@{src/powertester.h}}
+{\ttfamily \#include \char`\"{}Arduino.\+h\char`\"{}}\newline
+{\ttfamily \#include $<$Adafruit\+\_\+\+I\+N\+A219.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+{\ttfamily \#include $<$bitset$>$}\newline
+Grafo delle dipendenze di inclusione per powertester.\+h\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{a00006}
+\end{center}
+\end{figure}
+Questo grafo mostra quali altri file includono direttamente o indirettamente questo file\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=182pt]{a00007}
+\end{center}
+\end{figure}
+\doxysubsection*{Composti}
+\begin{DoxyCompactItemize}
+\item 
+struct \textbf{ Print\+Read}
+\item 
+class \textbf{ reading}
+\begin{DoxyCompactList}\small\item\em Readings class. \end{DoxyCompactList}\item 
+class \textbf{ powertester}
+\begin{DoxyCompactList}\small\item\em Main Power\+Tester class,. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Definizioni}
+\begin{Indent}\textbf{ Substruct Size}\par
+{\em String size for \doxyref{Print\+Read}{pag.}{a00011} Struct }\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ I\+N\+T\+\_\+\+S\+I\+ZE}~3
+\begin{DoxyCompactList}\small\item\em Size of \doxyref{Print\+Read}{pag.}{a00011} Structure Integer Subpart. \end{DoxyCompactList}\item 
+\#define \textbf{ F\+R\+A\+C\+T\+\_\+\+S\+I\+ZE}~4
+\begin{DoxyCompactList}\small\item\em Size of \doxyref{Print\+Read}{pag.}{a00011} Structure Fractional Subpart. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Macros}\par
+{\em Useful macro defnition }\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ RS}(X)~(1 $<$$<$ X)
+\begin{DoxyCompactList}\small\item\em Convert from position to value. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Readings}\par
+{\em Which data must be read from I\+N\+A219. \begin{DoxyAttention}{Attenzione}
+Setting the type of request reading, e.\+g. using \doxyref{powertester\+::\+Set\+Reading()}{pag.}{a00019_a8ec260c8827eee0cf06a39324b8e57ea} function, \doxyref{R\+S(x)}{pag.}{a00005_af70a81ec484eb8a126ed426915646373} macro must be used ... 
+\end{DoxyAttention}
+}\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ I\+R\+\_\+\+S\+H\+NT}~0
+\begin{DoxyCompactList}\small\item\em Read Shunt Voltage. \end{DoxyCompactList}\item 
+\#define \textbf{ I\+R\+\_\+\+B\+US}~1
+\begin{DoxyCompactList}\small\item\em Read Bus Voltage. \end{DoxyCompactList}\item 
+\#define \textbf{ I\+R\+\_\+\+L\+O\+AD}~2
+\begin{DoxyCompactList}\small\item\em Read Load Voltage. \end{DoxyCompactList}\item 
+\#define \textbf{ I\+R\+\_\+\+C\+U\+RR}~3
+\begin{DoxyCompactList}\small\item\em Read Load Current. \end{DoxyCompactList}\item 
+\#define \textbf{ I\+R\+\_\+\+P\+WR}~4
+\begin{DoxyCompactList}\small\item\em Read Load Power. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Reading Modes}\par
+{\em What kind of update is to be done.
+
+To speed up things ... }\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ I\+M\+\_\+\+R\+E\+C\+U\+RR}~0
+\begin{DoxyCompactList}\small\item\em Read everytime you can. \end{DoxyCompactList}\item 
+\#define \textbf{ I\+M\+\_\+\+S\+P\+A\+R\+SE}~1
+\begin{DoxyCompactList}\small\item\em Read at display refresh only. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+\begin{Indent}\textbf{ Reading Defaults}\par
+{\em Default values for Reading fields }\begin{DoxyCompactItemize}
+\item 
+\#define \textbf{ R\+\_\+\+D\+E\+F\+\_\+\+R\+E\+A\+DS}~0
+\begin{DoxyCompactList}\small\item\em Default Read Number. \end{DoxyCompactList}\item 
+\#define \textbf{ R\+\_\+\+D\+E\+F\+\_\+\+M\+IN}~1000000
+\begin{DoxyCompactList}\small\item\em Default M\+I\+N\+I\+M\+UM Read. \end{DoxyCompactList}\item 
+\#define \textbf{ R\+\_\+\+D\+E\+F\+\_\+\+P\+I\+LE}~0
+\begin{DoxyCompactList}\small\item\em Default P\+I\+LE Value. \end{DoxyCompactList}\item 
+\#define \textbf{ R\+\_\+\+D\+E\+F\+\_\+\+M\+AX}~-\/1000000
+\begin{DoxyCompactList}\small\item\em Default M\+I\+N\+I\+M\+UM Read. \end{DoxyCompactList}\item 
+\#define \textbf{ R\+E\+A\+D\+\_\+\+C\+O\+E\+FF}~1000
+\begin{DoxyCompactList}\small\item\em Use three decimals. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\end{Indent}
+
+
+\doxysubsection{Documentazione delle definizioni}
+\mbox{\label{a00005_aca1cf339647f5126f0f5838e1dfe0ed5}} 
+\index{powertester.h@{powertester.h}!FRACT\_SIZE@{FRACT\_SIZE}}
+\index{FRACT\_SIZE@{FRACT\_SIZE}!powertester.h@{powertester.h}}
+\doxysubsubsection{FRACT\_SIZE}
+{\footnotesize\ttfamily \#define F\+R\+A\+C\+T\+\_\+\+S\+I\+ZE~4}
+
+
+
+Size of \doxyref{Print\+Read}{pag.}{a00011} Structure Fractional Subpart. 
+
+
+
+Definizione alla linea 15 del file powertester.\+h.
+
+\mbox{\label{a00005_a0f0b37c2c097b019009f3458e996d29e}} 
+\index{powertester.h@{powertester.h}!IM\_RECURR@{IM\_RECURR}}
+\index{IM\_RECURR@{IM\_RECURR}!powertester.h@{powertester.h}}
+\doxysubsubsection{IM\_RECURR}
+{\footnotesize\ttfamily \#define I\+M\+\_\+\+R\+E\+C\+U\+RR~0}
+
+
+
+Read everytime you can. 
+
+
+
+Definizione alla linea 144 del file powertester.\+h.
+
+\mbox{\label{a00005_a765b2063991ab828aecc4815dad09f16}} 
+\index{powertester.h@{powertester.h}!IM\_SPARSE@{IM\_SPARSE}}
+\index{IM\_SPARSE@{IM\_SPARSE}!powertester.h@{powertester.h}}
+\doxysubsubsection{IM\_SPARSE}
+{\footnotesize\ttfamily \#define I\+M\+\_\+\+S\+P\+A\+R\+SE~1}
+
+
+
+Read at display refresh only. 
+
+
+
+Definizione alla linea 145 del file powertester.\+h.
+
+\mbox{\label{a00005_a3ac36dd0f02f263e5966ac1d1ecbd1bd}} 
+\index{powertester.h@{powertester.h}!INT\_SIZE@{INT\_SIZE}}
+\index{INT\_SIZE@{INT\_SIZE}!powertester.h@{powertester.h}}
+\doxysubsubsection{INT\_SIZE}
+{\footnotesize\ttfamily \#define I\+N\+T\+\_\+\+S\+I\+ZE~3}
+
+
+
+Size of \doxyref{Print\+Read}{pag.}{a00011} Structure Integer Subpart. 
+
+
+
+Definizione alla linea 14 del file powertester.\+h.
+
+\mbox{\label{a00005_a287f4e92a55da8c777d8079825c652bf}} 
+\index{powertester.h@{powertester.h}!IR\_BUS@{IR\_BUS}}
+\index{IR\_BUS@{IR\_BUS}!powertester.h@{powertester.h}}
+\doxysubsubsection{IR\_BUS}
+{\footnotesize\ttfamily \#define I\+R\+\_\+\+B\+US~1}
+
+
+
+Read Bus Voltage. 
+
+
+
+Definizione alla linea 132 del file powertester.\+h.
+
+\mbox{\label{a00005_aa67c2c5afca9e21b348ac1703304de98}} 
+\index{powertester.h@{powertester.h}!IR\_CURR@{IR\_CURR}}
+\index{IR\_CURR@{IR\_CURR}!powertester.h@{powertester.h}}
+\doxysubsubsection{IR\_CURR}
+{\footnotesize\ttfamily \#define I\+R\+\_\+\+C\+U\+RR~3}
+
+
+
+Read Load Current. 
+
+
+
+Definizione alla linea 134 del file powertester.\+h.
+
+\mbox{\label{a00005_ae603065cd731a436b4923df06b8f43d6}} 
+\index{powertester.h@{powertester.h}!IR\_LOAD@{IR\_LOAD}}
+\index{IR\_LOAD@{IR\_LOAD}!powertester.h@{powertester.h}}
+\doxysubsubsection{IR\_LOAD}
+{\footnotesize\ttfamily \#define I\+R\+\_\+\+L\+O\+AD~2}
+
+
+
+Read Load Voltage. 
+
+
+
+Definizione alla linea 133 del file powertester.\+h.
+
+\mbox{\label{a00005_af7ae448744dac7b46ef7134b7bd598ba}} 
+\index{powertester.h@{powertester.h}!IR\_PWR@{IR\_PWR}}
+\index{IR\_PWR@{IR\_PWR}!powertester.h@{powertester.h}}
+\doxysubsubsection{IR\_PWR}
+{\footnotesize\ttfamily \#define I\+R\+\_\+\+P\+WR~4}
+
+
+
+Read Load Power. 
+
+
+
+Definizione alla linea 135 del file powertester.\+h.
+
+\mbox{\label{a00005_a0cc3b031511c5a660506849de717f2a8}} 
+\index{powertester.h@{powertester.h}!IR\_SHNT@{IR\_SHNT}}
+\index{IR\_SHNT@{IR\_SHNT}!powertester.h@{powertester.h}}
+\doxysubsubsection{IR\_SHNT}
+{\footnotesize\ttfamily \#define I\+R\+\_\+\+S\+H\+NT~0}
+
+
+
+Read Shunt Voltage. 
+
+
+
+Definizione alla linea 131 del file powertester.\+h.
+
+\mbox{\label{a00005_aee36bc2b7df97091c931a7649d905999}} 
+\index{powertester.h@{powertester.h}!R\_DEF\_MAX@{R\_DEF\_MAX}}
+\index{R\_DEF\_MAX@{R\_DEF\_MAX}!powertester.h@{powertester.h}}
+\doxysubsubsection{R\_DEF\_MAX}
+{\footnotesize\ttfamily \#define R\+\_\+\+D\+E\+F\+\_\+\+M\+AX~-\/1000000}
+
+
+
+Default M\+I\+N\+I\+M\+UM Read. 
+
+
+
+Definizione alla linea 155 del file powertester.\+h.
+
+\mbox{\label{a00005_a52b6d7a2bc8695df7129b32051dad76a}} 
+\index{powertester.h@{powertester.h}!R\_DEF\_MIN@{R\_DEF\_MIN}}
+\index{R\_DEF\_MIN@{R\_DEF\_MIN}!powertester.h@{powertester.h}}
+\doxysubsubsection{R\_DEF\_MIN}
+{\footnotesize\ttfamily \#define R\+\_\+\+D\+E\+F\+\_\+\+M\+IN~1000000}
+
+
+
+Default M\+I\+N\+I\+M\+UM Read. 
+
+
+
+Definizione alla linea 153 del file powertester.\+h.
+
+\mbox{\label{a00005_aa191d619c2f9a777d2c77544713fa0e9}} 
+\index{powertester.h@{powertester.h}!R\_DEF\_PILE@{R\_DEF\_PILE}}
+\index{R\_DEF\_PILE@{R\_DEF\_PILE}!powertester.h@{powertester.h}}
+\doxysubsubsection{R\_DEF\_PILE}
+{\footnotesize\ttfamily \#define R\+\_\+\+D\+E\+F\+\_\+\+P\+I\+LE~0}
+
+
+
+Default P\+I\+LE Value. 
+
+
+
+Definizione alla linea 154 del file powertester.\+h.
+
+\mbox{\label{a00005_a796e9e79d6ce6f7f6590e74117179179}} 
+\index{powertester.h@{powertester.h}!R\_DEF\_READS@{R\_DEF\_READS}}
+\index{R\_DEF\_READS@{R\_DEF\_READS}!powertester.h@{powertester.h}}
+\doxysubsubsection{R\_DEF\_READS}
+{\footnotesize\ttfamily \#define R\+\_\+\+D\+E\+F\+\_\+\+R\+E\+A\+DS~0}
+
+
+
+Default Read Number. 
+
+
+
+Definizione alla linea 152 del file powertester.\+h.
+
+\mbox{\label{a00005_a11d3404b91dbce5fcee466250716d376}} 
+\index{powertester.h@{powertester.h}!READ\_COEFF@{READ\_COEFF}}
+\index{READ\_COEFF@{READ\_COEFF}!powertester.h@{powertester.h}}
+\doxysubsubsection{READ\_COEFF}
+{\footnotesize\ttfamily \#define R\+E\+A\+D\+\_\+\+C\+O\+E\+FF~1000}
+
+
+
+Use three decimals. 
+
+
+
+Definizione alla linea 156 del file powertester.\+h.
+
+\mbox{\label{a00005_af70a81ec484eb8a126ed426915646373}} 
+\index{powertester.h@{powertester.h}!RS@{RS}}
+\index{RS@{RS}!powertester.h@{powertester.h}}
+\doxysubsubsection{RS}
+{\footnotesize\ttfamily \#define RS(\begin{DoxyParamCaption}\item[{}]{X }\end{DoxyParamCaption})~(1 $<$$<$ X)}
+
+
+
+Convert from position to value. 
+
+
+
+Definizione alla linea 31 del file powertester.\+h.
+
