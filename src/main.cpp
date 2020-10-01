@@ -7,8 +7,8 @@
 #include <TFT_eSPI.h>
 #include <powertester.h>
 
-powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID);    //!<Left INA219 Chip (Left PSU)
-powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID); //!<Right INA219 Chip (Right PSU)
+powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OFFSET);     //!<Left INA219 Chip (Left PSU)
+powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OFFSET); //!<Right INA219 Chip (Right PSU)
 
 TFT_eSPI tft = TFT_eSPI(); //!<TFT Display
 

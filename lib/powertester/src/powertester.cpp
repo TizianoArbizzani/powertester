@@ -101,7 +101,7 @@ int reading::_get_mean()
 // POWERTESTER - Public
 // --------------------------------
 
-powertester::powertester(uint8_t i2c_address, const char *Id) : Adafruit_INA219(i2c_address), _Address(i2c_address)
+powertester::powertester(uint8_t i2c_address, const char *Id, int Xoff) : Adafruit_INA219(i2c_address), _Address(i2c_address), _Xoffset(Xoff)
 {
     // Initalizing Reading
     _Readings = {reading("SH", "mV"), reading("BU"), reading("LD"), reading("CU", "mA"), reading("PW", "mW")};
@@ -109,7 +109,6 @@ powertester::powertester(uint8_t i2c_address, const char *Id) : Adafruit_INA219(
     // Initialize Read Mode
     _ReadMask.reset();
     _ReadMask.set(IR_CURR);
-
     // Setting Powertester Identificator
     strncpy(_Id, Id, 8);
 }
@@ -199,7 +198,7 @@ void powertester::display(Stream *S)
     S->printf("%s ", _Id);
     for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        it->display(S);
+        it->display(S, _Xoffset);
     }
     S->println("");
 }

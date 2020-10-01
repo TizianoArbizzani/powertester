@@ -11,4 +11,7 @@
 
 #define TFT_UPDATES_MS 1000 //!<TFT Update frequency in milliseconds
 
+#define LEFT_OFFSET 0    //!< X value for left PSU Data
+#define RIGHT_OFFSET 320 //!< X value for right PSU Data
+
 #endif

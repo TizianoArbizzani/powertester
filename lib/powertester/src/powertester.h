@@ -51,12 +51,12 @@ public:
      */
     reading(const char *Label = "Unk", const char *Unit = "V");
     /**
-     * @brief  Reset reading to empty default
+     * @brief  Reset reading to default (empty) values.
      * 
      */
     void reset();
     /**
-     * @brief Save a reading to the structure
+     * @brief Executes a reading and save it to object properties.
      * 
      * @param[in] ReadData Data read to be saved
      */
@@ -174,7 +174,7 @@ public:
      * @param[in] i2c_address I2C Address of INA219 chip
      * @param[in] Id INA219 chip Textual label (debug purposes)
      */
-    powertester(uint8_t i2c_address, const char *Id);
+    powertester(uint8_t i2c_address, const char *Id, int Xoff);
     /**
      * @brief Initialize INA219 chip
      * 
@@ -215,6 +215,7 @@ private:
     char _Id[8];                      //!< INA219 Chip Label
     int _Address;                     //!< INA219 I2C address (default 0x40)
     bool _Active;                     //!< INA219 is active (I2C Reachable??)
+    int _Xoffset;                     //!< TFT Horizontal Offset for PSU
     std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
     std::array<reading, 5> _Readings; //!< INA219 Reading fields
 };
