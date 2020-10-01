@@ -40,12 +40,13 @@ void reading::set(float ReadData)
     }
 }
 
-void reading::display(Stream *S)
+void reading::display(Stream *S, int Xoff)
 {
     PrintRead PrMin;
     PrintRead PrMean;
     PrintRead PrMax;
 
+    // S
     _PrSet(_get_min(), &PrMin);
     _PrSet(_get_mean(), &PrMean);
     _PrSet(_get_max(), &PrMax);
@@ -192,6 +193,7 @@ void powertester::update(uint16_t Rm = IM_RECURR)
 
 void powertester::display(Stream *S)
 {
+    // Load values usually not read at during high speed sampling ...
     update(IM_SPARSE);
 
     S->printf("%s ", _Id);

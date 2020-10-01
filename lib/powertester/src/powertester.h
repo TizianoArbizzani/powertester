@@ -58,15 +58,16 @@ public:
     /**
      * @brief Save a reading to the structure
      * 
-     * @param ReadData Data read to be saved
+     * @param[in] ReadData Data read to be saved
      */
     void set(float ReadData);
     /**
-     * @brief 
+     * @brief Show single data reading
      * 
-     * @param S 
+     * @param[in] S Stream accepting data
+     * @param[in] Xoff Offset in LCD Display 
      */
-    void display(Stream *S);
+    void display(Stream *S, int Xoff);
     /**
      * @brief 
      * 
@@ -75,11 +76,13 @@ public:
      */
     bool hasFocus();
     /**
-     * @brief Set the Focus object
+     * @brief Set the Focus to this reading.
      * 
-     * @param Focus 
-     * @return true 
-     * @return false 
+     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
+     * 
+     * @param[in] Focus Is this field under focus
+     * @return true Focus is now set
+     * @return false Focus in now unset
      */
     bool setFocus(bool Focus);
 
