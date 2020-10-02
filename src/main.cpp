@@ -67,10 +67,10 @@ void loop(void)
 
     NextPrint = millis() + TFT_UPDATES_MS; // Rearm trigger for next operation
 
-    // ONBOARD_LED_ON;
+    ONBOARD_LED_ON;
     PT_Left.display(&Serial);
     PT_Right.display(&Serial);
-    // ONBOARD_LED_OFF;
+    ONBOARD_LED_OFF;
   }
 
   //-----------------------------------------------

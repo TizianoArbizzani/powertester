@@ -128,8 +128,8 @@ private:
  * @attention Setting the type of request reading, e.g. using powertester::SetReading() function, RS(x) macro must be used ... 
  */
 ///@{
-#define IR_SHNT 0 //!<Read Shunt Voltage
-#define IR_BUS 1  //!<Read Bus Voltage
+#define IR_BUS 0  //!<Read Bus Voltage
+#define IR_SHNT 1 //!<Read Shunt Voltage
 #define IR_LOAD 2 //!<Read Load Voltage
 #define IR_CURR 3 //!<Read Load Current
 #define IR_PWR 4  //!<Read Load Power

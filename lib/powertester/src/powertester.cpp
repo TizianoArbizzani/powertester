@@ -42,27 +42,31 @@ void reading::set(float ReadData)
 
 void reading::display(Stream *S, int Xoff)
 {
-    PrintRead PrMin;
     PrintRead PrMean;
-    PrintRead PrMax;
-
-    // S
-    _PrSet(_get_min(), &PrMin);
     _PrSet(_get_mean(), &PrMean);
-    _PrSet(_get_max(), &PrMax);
-
-    S->printf("%s%s:", _focus ? "<" : "[", _Label);
 
     if (_focus)
     {
-        S->printf("(%03d) ", _get_reads());
-    }
+        PrintRead PrMin;
+        PrintRead PrMax;
+        _PrSet(_get_min(), &PrMin);
+        _PrSet(_get_max(), &PrMax);
 
-    S->printf("%c%s.%s;%c%s.%s;%c%s.%s %s%s ",
-              PrMin.Sign, PrMin.Int, PrMin.Fract,
-              PrMean.Sign, PrMean.Int, PrMean.Fract,
-              PrMax.Sign, PrMax.Int, PrMax.Fract,
-              _Unit, _focus ? ">" : "]");
+        S->printf("<%s: (%03d) %c%s.%s;%c%s.%s;%c%s.%s %s>  ",
+                  _Label,
+                  _get_reads(),
+                  PrMin.Sign, PrMin.Int, PrMin.Fract,
+                  PrMean.Sign, PrMean.Int, PrMean.Fract,
+                  PrMax.Sign, PrMax.Int, PrMax.Fract,
+                  _Unit);
+    }
+    else
+    {
+        S->printf("<%s: %c%s.%s %s>  ",
+                  _Label,
+                  PrMean.Sign, PrMean.Int, PrMean.Fract,
+                  _Unit);
+    }
 
     reset();
 }
@@ -104,7 +108,7 @@ int reading::_get_mean()
 powertester::powertester(uint8_t i2c_address, const char *Id, int Xoff) : Adafruit_INA219(i2c_address), _Address(i2c_address), _Xoffset(Xoff)
 {
     // Initalizing Reading
-    _Readings = {reading("SH", "mV"), reading("BU"), reading("LD"), reading("CU", "mA"), reading("PW", "mW")};
+    _Readings = {reading("BU"), reading("SH", "mV"), reading("LD"), reading("CU", "mA"), reading("PW", "mW")};
 
     // Initialize Read Mode
     _ReadMask.reset();
@@ -195,7 +199,7 @@ void powertester::display(Stream *S)
     // Load values usually not read at during high speed sampling ...
     update(IM_SPARSE);
 
-    S->printf("%s ", _Id);
+    S->printf("* %s ", _Id);
     for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
     {
         it->display(S, _Xoffset);
@@ -221,7 +225,8 @@ static void _PrSet(int Value, PrintRead *Pr)
     int Ip = abs(Value) / READ_COEFF;
     int Fp = abs(Value) % READ_COEFF;
 
-    Pr->Sign = (Value <= 0) ? '-' : ' ';
+    Pr->Sign = (Value >= 0) ? ' ' : '-';
+
     snprintf(Pr->Int, INT_SIZE, "%2d", Ip);
     snprintf(Pr->Fract, FRACT_SIZE, "%03d", Fp);
 }
