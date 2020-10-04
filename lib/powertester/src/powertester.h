@@ -62,13 +62,12 @@ public:
      */
     void set(float ReadData);
     /**
-     * @brief Show single data reading (Serial CSV Mode)
+     * @brief Show single data reading 
      * 
      * @param[in] S Stream accepting data
      * @param[in] Xoff Offset in LCD Display 
-     * @param[in] SerialMode SerialMode Serial Mode
      */
-    void display(Stream *S, int Xoff, uint8_t SerialMode);
+    void display(Stream *S, int Xoff);
     /**
      * @brief 
      * 
@@ -79,11 +78,15 @@ public:
     /**
      * @brief Set the Focus to this reading.
      * 
+     * @param[in] SerialMode Serial Printout Mode (No print, machine parsed, human readable)
+     */
+    void setSerialPrints(uint8_t SerialMode);
+    /**
+     * @brief Set the Focus to this reading.
+     * 
      * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
      * 
-     * @param[in] Focus Is this field under focus
-     * @return true Focus is now set
-     * @return false Focus in now unset
+     * @param[in] SerialMode Serial Mode
      */
     bool setFocus(bool Focus);
 
@@ -121,7 +124,8 @@ private:
     int _IR_max;   //!< Maximum value read
     int _IR_reads; //!< Number of readings
 
-    bool _focus; //!< This is the current focused reading
+    uint8_t _SerialPrints; //!< Serial Printout Mode (No print, machine parsed, human readable)
+    bool _focus;           //!< This is the current focused reading
 };
 
 /** @name Readings
@@ -218,15 +222,15 @@ public:
      * @brief Print the requested Reading
      * 
      * @param[in] S The Stream in use for the output
-     * @param[in] SerialMode SerialMode Serial Mode 
      */
-    void display(Stream *S, uint8_t SerialMode);
+    void display(Stream *S);
 
 private:
     char _Id[8];                      //!< INA219 Chip Label
     int _Address;                     //!< INA219 I2C address (default 0x40)
     bool _Active;                     //!< INA219 is active (I2C Reachable??)
     int _Xoffset;                     //!< TFT Horizontal Offset for PSU
+    uint8_t _SerialPrints;            //!< Serial Printout Mode (No print, machine parsed, human readable)
     std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
     std::array<reading, 5> _Readings; //!< INA219 Reading fields
 };

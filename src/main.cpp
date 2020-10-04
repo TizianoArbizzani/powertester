@@ -10,9 +10,9 @@
 powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OFFSET);     //!<Left INA219 Chip (Left PSU)
 powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OFFSET); //!<Right INA219 Chip (Right PSU)
 
-TFT_eSPI tft = TFT_eSPI();   //!<TFT Display
-unsigned long NextPrint;     //!<Time to go for next TFT Update
-uint8_t PrintMode = D_HUMAN; //!<Serial printing verbose mode
+TFT_eSPI tft = TFT_eSPI();     //!<TFT Display
+unsigned long NextPrint;       //!<Time to go for next TFT Update
+uint8_t PrintMode = D_MACHINE; //!<Serial printing verbose mode
 
 void setup(void)
 {
@@ -78,8 +78,8 @@ void loop(void)
     NextPrint = millis() + TFT_UPDATES_MS; // Rearm trigger for next operation
 
     ONBOARD_LED_ON;
-    PT_Left.display(&Serial, PrintMode);
-    PT_Right.display(&Serial, PrintMode);
+    PT_Left.display(&Serial);
+    PT_Right.display(&Serial);
     ONBOARD_LED_OFF;
   }
 

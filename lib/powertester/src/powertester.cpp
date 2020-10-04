@@ -44,7 +44,7 @@ void reading::set(float ReadData)
     }
 }
 
-void reading::display(Stream *S, int Xoff, uint8_t SerialMode)
+void reading::display(Stream *S, int Xoff)
 {
     PrintRead PrMean;
     _PrSet(_get_mean(), &PrMean);
@@ -58,7 +58,7 @@ void reading::display(Stream *S, int Xoff, uint8_t SerialMode)
         _PrSet(_get_min(), &PrMin);
         _PrSet(_get_max(), &PrMax);
 
-        if (SerialMode == D_HUMAN)
+        if (_SerialPrints == D_HUMAN)
         {
             S->printf("<%s: (%03d) %c%s.%s;%c%s.%s;%c%s.%s %s>  ",
                       _Label,
@@ -68,7 +68,7 @@ void reading::display(Stream *S, int Xoff, uint8_t SerialMode)
                       PrMax.Sign, PrMax.Int, PrMax.Fract,
                       _Unit);
         }
-        else if (SerialMode == D_MACHINE)
+        else if (_SerialPrints == D_MACHINE)
         {
             S->printf("F;%03d;%c%s.%s;%c%s.%s;%c%s.%s;",
                       _get_reads(),
@@ -80,14 +80,14 @@ void reading::display(Stream *S, int Xoff, uint8_t SerialMode)
     else
     {
         // Unfocused _display-refresh-only_ reading
-        if (SerialMode == D_HUMAN)
+        if (_SerialPrints == D_HUMAN)
         {
             S->printf("<%s: %c%s.%s %s>  ",
                       _Label,
                       PrMean.Sign, PrMean.Int, PrMean.Fract,
                       _Unit);
         }
-        else if (SerialMode == D_MACHINE)
+        else if (_SerialPrints == D_MACHINE)
         {
 
             S->printf("C;%c%s.%s;", PrMean.Sign, PrMean.Int, PrMean.Fract);
@@ -103,11 +103,19 @@ bool reading::setFocus(bool Focus = true)
 
 bool reading::hasFocus() { return (_focus); }
 
+void reading::setSerialPrints(uint8_t SerialMode)
+{
+    _SerialPrints = SerialMode;
+}
+
 // --------------------------------
 //  READING - Private
 // --------------------------------
 
-int reading::_get_reads() { return _IR_reads; }
+int reading::_get_reads()
+{
+    return _IR_reads;
+}
 
 int reading::_get_min() { return _IR_min; }
 
@@ -163,6 +171,13 @@ bool powertester::setup(uint8_t SerialMode)
         if (SerialMode)
             Serial.printf("* INA219 : Addr: 0x%X ......... [Set: : 16V, 400mA range]\n", _Address);
     }
+
+    for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
+    {
+        it->setSerialPrints(SerialMode);
+    }
+    if (SerialMode)
+        Serial.printf("* Glob   : Set Serial Mode .... [%u]\n", SerialMode);
 
     return (_Active);
 }
@@ -223,23 +238,23 @@ void powertester::update(uint16_t Rm = IM_RECURR)
     }
 }
 
-void powertester::display(Stream *S, uint8_t SerialMode)
+void powertester::display(Stream *S)
 {
     // Load values usually not read at during high speed sampling ...
     update(IM_SPARSE);
 
-    if (SerialMode == D_HUMAN)
+    if (_SerialPrints == D_HUMAN)
     {
         S->printf("* %s ", _Id);
     }
-    else if (SerialMode == D_MACHINE)
+    else if (_SerialPrints == D_MACHINE)
     {
         S->printf("%s;", _Id);
     }
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        it->display(S, _Xoffset, SerialMode);
+        it->display(S, _Xoffset);
         it->reset();
     }
     S->println("");
