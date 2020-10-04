@@ -9,7 +9,11 @@ static void _PrSet(int Value, PrintRead *Pr);
 // --------------------------------
 // READING - Public
 // --------------------------------
-reading::reading(const char *Label, const char *Unit) : _IR_min(R_DEF_MIN), _IR_pile(R_DEF_PILE), _IR_max(R_DEF_MAX), _IR_reads(R_DEF_READS), _focus(false)
+reading::reading(const char *Label, const char *Unit) : _IR_min(R_DEF_MIN),
+                                                        _IR_pile(R_DEF_PILE),
+                                                        _IR_max(R_DEF_MAX),
+                                                        _IR_reads(R_DEF_READS),
+                                                        _focus(false)
 {
     strncpy(_Unit, Unit, 8);
     strncpy(_Label, Label, 4);
@@ -47,6 +51,8 @@ void reading::display(Stream *S, int Xoff)
 
     if (_focus)
     {
+        // Focused HiSpeed reading
+
         PrintRead PrMin;
         PrintRead PrMax;
         _PrSet(_get_min(), &PrMin);
@@ -62,6 +68,8 @@ void reading::display(Stream *S, int Xoff)
     }
     else
     {
+        // Unfocused _display-refresh-only_ reading
+
         S->printf("<%s: %c%s.%s %s>  ",
                   _Label,
                   PrMean.Sign, PrMean.Int, PrMean.Fract,
@@ -105,7 +113,9 @@ int reading::_get_mean()
 // POWERTESTER - Public
 // --------------------------------
 
-powertester::powertester(uint8_t i2c_address, const char *Id, int Xoff) : Adafruit_INA219(i2c_address), _Address(i2c_address), _Xoffset(Xoff)
+powertester::powertester(uint8_t i2c_address, const char *Id, int Xoff) : Adafruit_INA219(i2c_address),
+                                                                          _Address(i2c_address),
+                                                                          _Xoffset(Xoff)
 {
     // Initalizing Reading
     _Readings = {reading("BU"), reading("SH", "mV"), reading("LD"), reading("CU", "mA"), reading("PW", "mW")};
@@ -200,7 +210,7 @@ void powertester::display(Stream *S)
     update(IM_SPARSE);
 
     S->printf("* %s ", _Id);
-    for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
+    for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
         it->display(S, _Xoffset);
     }
