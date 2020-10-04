@@ -9,7 +9,7 @@
 #define RIGHT_INA_I2C (0x41) //!<Right INA219 I2C address
 #define RIGHT_INA_ID "Dx"    //!<Right INA219 identification label
 
-#define TFT_UPDATES_MS 1000 //!<TFT Update frequency in milliseconds
+#define TFT_UPDATES_MS 250 //!<TFT Update frequency in milliseconds
 
 #define LEFT_OFFSET 0    //!< X value for left PSU Data
 #define RIGHT_OFFSET 320 //!< X value for right PSU Data
