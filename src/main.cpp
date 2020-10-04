@@ -10,9 +10,9 @@
 powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OFFSET);     //!<Left INA219 Chip (Left PSU)
 powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OFFSET); //!<Right INA219 Chip (Right PSU)
 
-TFT_eSPI tft = TFT_eSPI(); //!<TFT Display
-
-unsigned long NextPrint; //!<Time to go for next TFT Update
+TFT_eSPI tft = TFT_eSPI();   //!<TFT Display
+unsigned long NextPrint;     //!<Time to go for next TFT Update
+uint8_t PrintMode = D_HUMAN; //!<Serial printing verbose mode
 
 void setup(void)
 {
@@ -29,17 +29,27 @@ void setup(void)
     delay(1); // will pause Zero, Leonardo, etc until serial console opens
   }
 
-  Serial.printf("* Esp32GetCurrent Operations ................... [Start: %u Bps]\n", SERIALSPEED);
+  if (PrintMode)
+    Serial.printf("* ESP32 : Initialized serial ... [Start: %u Bps]\n", SERIALSPEED);
 
-  PT_Left.setup();
-  PT_Right.setup();
+  tft.init();
+  tft.setRotation(3);
+  tft.fillScreen(TFT_BLACK);
 
-  Serial.println("* INA219 : Setting main data reading ........... [*** Current ***]");
+  if (PrintMode)
+    Serial.println("* TFT : Initialization ........ [Done]");
+
+  PT_Left.setup(PrintMode);
+  PT_Right.setup(PrintMode);
+
+  if (PrintMode)
+    Serial.println("* INA219 : Focus on reading ... [Current]");
 
   PT_Left.SetReading(RS(IR_CURR));
   PT_Right.SetReading(RS(IR_CURR));
 
-  Serial.println("* INA219 : Measuring voltage and current ....... [*** Sampling Start ***]");
+  if (PrintMode)
+    Serial.println("* INA219 : Measurements ....... [Start]");
 
   NextPrint = millis() + TFT_UPDATES_MS;
 
@@ -68,8 +78,8 @@ void loop(void)
     NextPrint = millis() + TFT_UPDATES_MS; // Rearm trigger for next operation
 
     ONBOARD_LED_ON;
-    PT_Left.display(&Serial);
-    PT_Right.display(&Serial);
+    PT_Left.display(&Serial, PrintMode);
+    PT_Right.display(&Serial, PrintMode);
     ONBOARD_LED_OFF;
   }
 

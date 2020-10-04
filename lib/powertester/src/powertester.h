@@ -62,12 +62,13 @@ public:
      */
     void set(float ReadData);
     /**
-     * @brief Show single data reading
+     * @brief Show single data reading (Serial CSV Mode)
      * 
      * @param[in] S Stream accepting data
      * @param[in] Xoff Offset in LCD Display 
+     * @param[in] SerialMode SerialMode Serial Mode
      */
-    void display(Stream *S, int Xoff);
+    void display(Stream *S, int Xoff, uint8_t SerialMode);
     /**
      * @brief 
      * 
@@ -145,6 +146,17 @@ private:
 #define IM_SPARSE 1 //!<Read at display refresh only
 ///@}
 
+/** @name Display Modes
+ *  What kind of display is to be done.
+ * 
+ *  To speed up things ...
+ */
+///@{
+#define D_OFF 0     //!<Serial output disabled
+#define D_MACHINE 1 //!<Serial will be read by an automatic parser
+#define D_HUMAN 2   //!<Serial will be read from an human operator
+///@}
+
 /** @name Reading Defaults
  *  Default values for Reading fields
  */
@@ -182,10 +194,12 @@ public:
      * 
      * @internal Reserved data
      * 
+     * @param[in] SerialMode SerialMode Serial Mode
+     * 
      * @return true Init Ok
      * @return false Init failed (i2c bus problems?)
      */
-    bool setup();
+    bool setup(uint8_t SerialMode);
     /**
      * @brief Read a new dataset
      * 
@@ -201,15 +215,12 @@ public:
      */
     void SetReading(int Bitmap);
     /**
-     * @brief Read the requested data
+     * @brief Print the requested Reading
      * 
      * @param[in] S The Stream in use for the output
+     * @param[in] SerialMode SerialMode Serial Mode 
      */
-    void display(Stream *S);
-    /**
-     * @brief 
-     * 
-     */
+    void display(Stream *S, uint8_t SerialMode);
 
 private:
     char _Id[8];                      //!< INA219 Chip Label
