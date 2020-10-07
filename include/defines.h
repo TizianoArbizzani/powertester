@@ -14,4 +14,6 @@
 #define LEFT_OFFSET 0    //!< X value for left PSU Data
 #define RIGHT_OFFSET 320 //!< X value for right PSU Data
 
+#define DBG_SWITCH_HOLD 30000 //!<TFT Update frequency in milliseconds
+
 #endif

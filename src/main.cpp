@@ -10,9 +10,12 @@
 powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OFFSET);     //!<Left INA219 Chip (Left PSU)
 powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OFFSET); //!<Right INA219 Chip (Right PSU)
 
-TFT_eSPI tft = TFT_eSPI();     //!<TFT Display
-unsigned long NextPrint;       //!<Time to go for next TFT Update
-uint8_t PrintMode = D_MACHINE; //!<Serial printing verbose mode
+TFT_eSPI tft = TFT_eSPI();   //!<TFT Display
+unsigned long NextPrint;     //!<Time to go for next TFT Update
+uint8_t PrintMode = D_HUMAN; //!<Serial printing verbose mode
+
+bool CurHoldingMode = false;
+unsigned long NextHoldSwitch; //!<Time to go for next switch from hold or not hold
 
 void setup(void)
 {
@@ -24,36 +27,41 @@ void setup(void)
   ONBOARD_LED_ON;
 
   Serial.begin(SERIALSPEED);
-  while (!Serial)
-  {
-    delay(1); // will pause Zero, Leonardo, etc until serial console opens
-  }
+
+  //while (!Serial)
+  //{
+  // delay(1); // will pause Zero, Leonardo, etc until serial console opens
+  //}
 
   if (PrintMode)
-    Serial.printf("* ESP32 : Initialized serial ... [Start: %u Bps]\n", SERIALSPEED);
+  {
+    Serial.printf("* SYS    : Initialized serial ... [Start: " B_GRE "%u " RESET "Bps]\n", SERIALSPEED);
+    Serial.printf("* SYS    : Revision 001 ....... [" N_GRE "%s" RESET "]\n", PIO_SRC_REV);
+  }
 
   tft.init();
   tft.setRotation(3);
   tft.fillScreen(TFT_BLACK);
 
   if (PrintMode)
-    Serial.println("* TFT : Initialization ........ [Done]");
+    Serial.println("* TFT    : Initialization ..... [" B_GRE "Done" RESET "]");
 
   PT_Left.setup(PrintMode);
   PT_Right.setup(PrintMode);
 
-  if (PrintMode)
-    Serial.println("* INA219 : Focus on reading ... [Current]");
-
-  PT_Left.SetReading(RS(IR_CURR));
-  PT_Right.SetReading(RS(IR_CURR));
+  PT_Left.setReading(RS(IR_CURR));
+  PT_Right.setReading(RS(IR_CURR));
 
   if (PrintMode)
-    Serial.println("* INA219 : Measurements ....... [Start]");
-
-  NextPrint = millis() + TFT_UPDATES_MS;
+    Serial.println("* INA219 : Focus on reading ... [" B_GRE "Current" RESET "]");
 
   ONBOARD_LED_OFF;
+
+  if (PrintMode)
+    Serial.println("* INA219 : Measurements ....... [" B_GRE "Start" RESET "]");
+
+  NextPrint = millis() + TFT_UPDATES_MS;
+  NextHoldSwitch = millis() + DBG_SWITCH_HOLD;
 }
 
 void loop(void)
@@ -81,6 +89,16 @@ void loop(void)
     PT_Left.display(&Serial);
     PT_Right.display(&Serial);
     ONBOARD_LED_OFF;
+  }
+
+  if (millis() >= NextHoldSwitch)
+  {
+    NextHoldSwitch = millis() + DBG_SWITCH_HOLD;
+
+    CurHoldingMode = !CurHoldingMode;
+
+    PT_Left.setHoldingMode(CurHoldingMode);
+    PT_Right.setHoldingMode(CurHoldingMode);
   }
 
   //-----------------------------------------------

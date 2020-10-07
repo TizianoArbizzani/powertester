@@ -7,12 +7,44 @@
 #include <array>
 #include <bitset>
 
+/** @name Colors
+ *  ANSI colors for terminals
+ * 
+ */
+///@{
+#define N_BLA "\033[1;30m" //!<Normal Black
+#define N_RED "\033[1;31m" //!<Normal Red
+#define N_GRE "\033[1;32m" //!<Normal Green
+#define N_YEL "\033[1;33m" //!<Normal Yellow
+#define N_BLU "\033[1;34m" //!<Normal Blue
+#define N_MAG "\033[1;35m" //!<Normal Magenta
+#define N_CYA "\033[1;36m" //!<Normal Cyan
+#define N_WHI "\033[1;37m" //!<Normal White
+#define B_BLA "\033[1;90m" //!<Bright Black
+#define B_RED "\033[1;91m" //!<Bright Red
+#define B_GRE "\033[1;92m" //!<Bright Green
+#define B_YEL "\033[1;93m" //!<Bright Yellow
+#define B_BLU "\033[1;94m" //!<Bright Blue
+#define B_MAG "\033[1;95m" //!<Bright Magenta
+#define B_CYA "\033[1;96m" //!<Bright Cyan
+#define B_WHI "\033[1;97m" //!<Bright White
+#define RESET "\033[0m"    //!<Reset to standard values
+///@}
+
 /** @name Substruct Size
  *  String size for PrintRead Struct
  */
 ///@{
 #define INT_SIZE 3   //!<Size of PrintRead Structure Integer Subpart
 #define FRACT_SIZE 4 //!<Size of PrintRead Structure Fractional Subpart
+///@}
+
+/** @name Hold Modes
+ *  Hold MIN/MAX values modes
+ */
+///@{
+#define NO_HOLD_MODE false //!<Reset MIN/MAX at every display
+#define HOLD_MODE true     //!<Retain MIN/MAX values
 ///@}
 
 /** @struct PrintRead
@@ -89,6 +121,20 @@ public:
      * @param[in] SerialMode Serial Mode
      */
     bool setFocus(bool Focus);
+    /**
+     * @brief Set Holding Mode for current Reading
+     * 
+     * @param[in] HoldingMode Holding Mode (Min/Max must be reset or not ...)
+     * 
+     * @return bool Current (set) Holding Mode 
+     */
+    bool setHoldingMode(bool HoldingMode);
+    /**
+     * @brief Set Holding Mode for current Reading
+     * 
+     * @return bool Current Holding Mode 
+     */
+    bool getHoldingMode();
 
 private:
     /**
@@ -126,11 +172,12 @@ private:
 
     uint8_t _SerialPrints; //!< Serial Printout Mode (No print, machine parsed, human readable)
     bool _focus;           //!< This is the current focused reading
+    bool _hold;            //!< Hold mode (retain values)
 };
 
 /** @name Readings
  *  Which data must be read from INA219.
- * @attention Setting the type of request reading, e.g. using powertester::SetReading() function, RS(x) macro must be used ... 
+ * @attention Setting the type of request reading, e.g. using powertester::setReading() function, RS(x) macro must be used ... 
  */
 ///@{
 #define IR_BUS 0  //!<Read Bus Voltage
@@ -157,8 +204,8 @@ private:
  */
 ///@{
 #define D_OFF 0     //!<Serial output disabled
-#define D_MACHINE 1 //!<Serial will be read by an automatic parser
-#define D_HUMAN 2   //!<Serial will be read from an human operator
+#define D_MACHINE 1 //!<Serial output is intended to be parsed by an automatic parser (machine)
+#define D_HUMAN 2   //!<Serial will output is intended to be read from an human operator (colors, readable layout)
 ///@}
 
 /** @name Reading Defaults
@@ -217,13 +264,21 @@ public:
      * @param[in] Bitmap The type of requested reading (bus voltage, shunt voltage, load current, load power)
      * @attention Setting the type of request reading (using Readings definitions), RS(x) macro must be used ... 
      */
-    void SetReading(int Bitmap);
+    void setReading(int Bitmap);
     /**
      * @brief Print the requested Reading
      * 
      * @param[in] S The Stream in use for the output
      */
     void display(Stream *S);
+    /**
+     * @brief Set Holding Mode for current Reading
+     * 
+     * @param[in] HoldingMode Holding Mode (Min/Max must be reset or not ...)
+     * 
+     * @return bool Current (set) Holding Mode 
+     */
+    bool setHoldingMode(bool HoldingMode);
 
 private:
     char _Id[8];                      //!< INA219 Chip Label

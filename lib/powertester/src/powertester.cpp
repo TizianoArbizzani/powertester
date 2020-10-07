@@ -13,7 +13,8 @@ reading::reading(const char *Label, const char *Unit) : _IR_min(R_DEF_MIN),
                                                         _IR_pile(R_DEF_PILE),
                                                         _IR_max(R_DEF_MAX),
                                                         _IR_reads(R_DEF_READS),
-                                                        _focus(false)
+                                                        _focus(false),
+                                                        _hold(NO_HOLD_MODE)
 {
     strncpy(_Unit, Unit, 8);
     strncpy(_Label, Label, 4);
@@ -21,10 +22,14 @@ reading::reading(const char *Label, const char *Unit) : _IR_min(R_DEF_MIN),
 
 void reading::reset()
 {
-    _IR_max = R_DEF_MAX;
     _IR_pile = R_DEF_PILE;
-    _IR_min = R_DEF_MIN;
     _IR_reads = R_DEF_READS;
+
+    if (!_hold)
+    {
+        _IR_max = R_DEF_MAX;
+        _IR_min = R_DEF_MIN;
+    }
 }
 
 void reading::set(float ReadData)
@@ -60,12 +65,13 @@ void reading::display(Stream *S, int Xoff)
 
         if (_SerialPrints == D_HUMAN)
         {
-            S->printf("<%s: (%03d) %c%s.%s;%c%s.%s;%c%s.%s %s>  ",
+            S->printf("<%s: (" N_CYA "%03d" RESET ")  %s  %s%s.%s" RESET "    %s%s.%s" RESET "    %s%s.%s" B_YEL "    %s" RESET ">  ",
                       _Label,
                       _get_reads(),
-                      PrMin.Sign, PrMin.Int, PrMin.Fract,
-                      PrMean.Sign, PrMean.Int, PrMean.Fract,
-                      PrMax.Sign, PrMax.Int, PrMax.Fract,
+                      (_hold) ? N_BLU "HOLD" RESET : "    ",
+                      (PrMin.Sign == '-') ? B_RED : B_GRE, PrMin.Int, PrMin.Fract,
+                      (PrMean.Sign == '-') ? B_RED : B_GRE, PrMean.Int, PrMean.Fract,
+                      (PrMax.Sign == '-') ? B_RED : B_GRE, PrMax.Int, PrMax.Fract,
                       _Unit);
         }
         else if (_SerialPrints == D_MACHINE)
@@ -82,9 +88,9 @@ void reading::display(Stream *S, int Xoff)
         // Unfocused _display-refresh-only_ reading
         if (_SerialPrints == D_HUMAN)
         {
-            S->printf("<%s: %c%s.%s %s>  ",
+            S->printf("<%s: %s%s.%s" B_YEL " %s" RESET ">  ",
                       _Label,
-                      PrMean.Sign, PrMean.Int, PrMean.Fract,
+                      (PrMean.Sign == '-') ? B_RED : B_GRE, PrMean.Int, PrMean.Fract,
                       _Unit);
         }
         else if (_SerialPrints == D_MACHINE)
@@ -107,6 +113,15 @@ void reading::setSerialPrints(uint8_t SerialMode)
 {
     _SerialPrints = SerialMode;
 }
+
+bool reading::setHoldingMode(bool HoldingMode)
+{
+    _hold = HoldingMode;
+
+    return (_hold);
+}
+
+bool reading::getHoldingMode() { return (_hold); }
 
 // --------------------------------
 //  READING - Private
@@ -156,7 +171,7 @@ bool powertester::setup(uint8_t SerialMode)
     // Initalizing INA219 chip
     if (!begin())
     {
-        Serial.printf("* INA219 : Addr: 0x%X ......... [!!! Init failed !!!]\n", _Address);
+        Serial.printf("* INA219 : Addr: 0x%X ......... [" N_RED "!!! Init failed !!!" RESET "]\n", _Address);
         _Active = false;
     }
     else
@@ -164,25 +179,25 @@ bool powertester::setup(uint8_t SerialMode)
         _Active = true;
 
         if (SerialMode)
-            Serial.printf("* INA219 : Addr: 0x%X ......... [Initialized]\n", _Address);
+            Serial.printf("* INA219 : Addr: 0x%X ......... [" N_GRE "Initialized" RESET "]\n", _Address);
 
         // Calibrating INA219 chip
         setCalibration_16V_400mA(); // 16V, 400mA range (higher precision on volts and amps):
         if (SerialMode)
-            Serial.printf("* INA219 : Addr: 0x%X ......... [Set: : 16V, 400mA range]\n", _Address);
+            Serial.printf("* INA219 : Addr: 0x%X ......... [" N_GRE "Set: : 16V, 400mA range" RESET "]\n", _Address);
     }
+
+    _SerialPrints = SerialMode;
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
         it->setSerialPrints(SerialMode);
     }
-    if (SerialMode)
-        Serial.printf("* Glob   : Set Serial Mode .... [%u]\n", SerialMode);
 
     return (_Active);
 }
 
-void powertester::SetReading(int Bitmap = IR_CURR)
+void powertester::setReading(int Bitmap = IR_CURR)
 {
     int i = 0;
 
@@ -245,7 +260,7 @@ void powertester::display(Stream *S)
 
     if (_SerialPrints == D_HUMAN)
     {
-        S->printf("* %s ", _Id);
+        S->printf(B_MAG "%s " RESET, _Id);
     }
     else if (_SerialPrints == D_MACHINE)
     {
@@ -258,6 +273,17 @@ void powertester::display(Stream *S)
         it->reset();
     }
     S->println("");
+}
+
+bool powertester::setHoldingMode(bool HoldingMode)
+{
+    for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
+    {
+        //if (it->hasFocus())
+        it->setHoldingMode(HoldingMode);
+    }
+
+    return (HoldingMode);
 }
 
 // --------------------------------
