@@ -3,13 +3,24 @@
 
 #include "Arduino.h"
 #include <Adafruit_INA219.h>
+#include <TFT_eSPI.h>
 
 #include <array>
 #include <bitset>
 
+/** @name Icons
+ *  Icons used
+ *  
+ */
+///@{
+#include "Alert.h"
+#include "Close.h"
+#include "Info.h"
+///@}
+
 /** @name Colors
  *  ANSI colors for terminals
- * 
+ *  
  */
 ///@{
 #define N_BLA "\033[1;30m" //!<Normal Black
@@ -60,9 +71,24 @@ typedef struct
  *  Useful macro defnition
  */
 ///@{
-#define RS(X) (1 << X) //!< Convert from position to value.
-///@}
+#define RS(X) (1 << X) //!< Convert from position to value. \
+                       ///@}
 
+/** @name TFT Settings
+ *  Settings Related to TFT Panel
+ *  
+ */
+///@{
+#define TFT_BC FSSB24 //!<
+#define TFT_LC FSSB18 //!<
+#define TFT_PA 180    //!<
+#define TFT_Y0 63     //!< First Line y
+#define TFT_Y1 98     //!< Sixth Line y
+#define TFT_Y2 142    //!< Second Line y
+#define TFT_Y3 192    //!< Third Line y
+#define TFT_Y4 242    //!< Fourth Line y
+#define TFT_Y5 290    //!< Fifth Line y
+///@}
 /*! 
  *  @brief     Readings class.
  *  @details   A single INA219 Reading
@@ -98,8 +124,9 @@ public:
      * 
      * @param[in] S Stream accepting data
      * @param[in] Xoff Offset in LCD Display 
+     * @param[in] BgColor BackGround Color (output cutoff or active)
      */
-    void display(Stream *S, int Xoff);
+    void display(Stream *S, int Xoff, int BgColor);
     /**
      * @brief 
      * 
@@ -135,6 +162,16 @@ public:
      * @return bool Current Holding Mode 
      */
     bool getHoldingMode();
+    /**
+     * @brief Set the TFT Panel for output
+     * 
+     * @remark Set the TFT Panel used for data output
+     * 
+     * @param[in] TFT_eSPI object referencing TFT Panel
+     * @param[in] Width TFT Panel Width
+     * @param[in] Height TFT Panel Height
+     */
+    void setTFT(TFT_eSPI *tft, uint16_t Width, uint16_t Height);
 
 private:
     /**
@@ -173,6 +210,9 @@ private:
     uint8_t _SerialPrints; //!< Serial Printout Mode (No print, machine parsed, human readable)
     bool _focus;           //!< This is the current focused reading
     bool _hold;            //!< Hold mode (retain values)
+    TFT_eSPI *_tft;        //!< TFT Display
+    uint16_t _tft_width;   //!< TFT Width (x)
+    uint16_t _tft_height;  //!< TFT Width (y)
 };
 
 /** @name Readings
@@ -219,6 +259,16 @@ private:
 #define READ_COEFF 1000    //!<Use three decimals
 ///@}
 
+/** @name Output Modes
+ *  Output states.
+ * 
+ *  Output can be cut off by relay
+ */
+///@{
+#define OUTPUT_CUTOFF 0 //!<PSU output disabled
+#define OUTPUT_ACTIVE 1 //!<PSU output enabled
+///@}
+
 /*! 
  *  @brief     Main PowerTester class,
  *  @details   This class is used to demonstrate a number of section commands.
@@ -237,7 +287,7 @@ public:
      * @param[in] i2c_address I2C Address of INA219 chip
      * @param[in] Id INA219 chip Textual label (debug purposes)
      */
-    powertester(uint8_t i2c_address, const char *Id, int Xoff);
+    powertester(uint8_t i2c_address, const char *Id, int Xoff, uint8_t OutPin);
     /**
      * @brief Initialize INA219 chip
      * 
@@ -279,13 +329,34 @@ public:
      * @return bool Current (set) Holding Mode 
      */
     bool setHoldingMode(bool HoldingMode);
+    /**
+     * @brief Activats/Deactivates output line
+     * 
+     * @param[in] OutputMode Current must be connected to output "bocchettone"
+     * 
+     * @return bool Current Output Mode 
+     */
+    bool setOutputMode(bool OutputMode);
+    /**
+     * @brief Notifies to Reading object Output TFT Panel Object 
+     * 
+     * @param[in] TFT_eSPI Output TFT Panel Reference 
+     * 
+     * @return bool Always true 
+     */
+    void setTFT(TFT_eSPI *tft);
 
 private:
     char _Id[8];                      //!< INA219 Chip Label
     int _Address;                     //!< INA219 I2C address (default 0x40)
     bool _Active;                     //!< INA219 is active (I2C Reachable??)
     int _Xoffset;                     //!< TFT Horizontal Offset for PSU
+    bool _Output;                     //!< Output is connected ...
+    uint8_t _OutPin;                  //!< The pin driving output relay
     uint8_t _SerialPrints;            //!< Serial Printout Mode (No print, machine parsed, human readable)
+    TFT_eSPI *_tft;                   //!< TFT Display
+    uint16_t _tft_width;              //!< TFT Width (x)
+    uint16_t _tft_height;             //!< TFT Width (y)
     std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
     std::array<reading, 5> _Readings; //!< INA219 Reading fields
 };

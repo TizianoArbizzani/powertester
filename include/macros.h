@@ -4,4 +4,7 @@
 #define ONBOARD_LED_ON digitalWrite(ONBOARD_LED, HIGH) //!<Light Onboard Led
 #define ONBOARD_LED_OFF digitalWrite(ONBOARD_LED, LOW) //!<Shutdown Onboard Led
 
+#define TFT_LED_ON digitalWrite(TFT_LED, HIGH) //!<Light TFT BackLight Led
+#define TFT_LED_OFF digitalWrite(TFT_LED, LOW) //!<Shutdown TFT BackLight Led
+
 #endif
