@@ -13,9 +13,25 @@
  *  
  */
 ///@{
-#include "Alert.h"
-#include "Close.h"
-#include "Info.h"
+#include "icons/top/Hold.h"
+#include "icons/top/NoHold.h"
+#include "icons/top/CutOff.h"
+#include "icons/top/Relay.h"
+#include "icons/readings/Bus.h"
+#include "icons/readings/Load.h"
+#include "icons/readings/Power.h"
+#include "icons/readings/Current_Min.h"
+#include "icons/readings/Current.h"
+#include "icons/readings/Current_Max.h"
+
+///@}
+
+/** @name Fonts
+ *  Fonts in use
+ *  
+ */
+///@{
+#include "fonts/frutiger.h"
 ///@}
 
 /** @name Colors
@@ -71,23 +87,45 @@ typedef struct
  *  Useful macro defnition
  */
 ///@{
-#define RS(X) (1 << X) //!< Convert from position to value. \
-                       ///@}
+#define RS(X) (1 << (X))
+///@}
 
 /** @name TFT Settings
  *  Settings Related to TFT Panel
  *  
  */
 ///@{
-#define TFT_BC FSSB24 //!<
-#define TFT_LC FSSB18 //!<
-#define TFT_PA 180    //!<
-#define TFT_Y0 63     //!< First Line y
-#define TFT_Y1 98     //!< Sixth Line y
-#define TFT_Y2 142    //!< Second Line y
-#define TFT_Y3 192    //!< Third Line y
-#define TFT_Y4 242    //!< Fourth Line y
-#define TFT_Y5 290    //!< Fifth Line y
+
+#define TFT_ON_COLOR 0x37E6  //!< (RGB565) Active Output window background
+#define TFT_OFF_COLOR 0xFD70 //!< (RGB565) CutOff Output window background
+
+#define TFT_POS_COLOR TFT_BLACK //!< Positive (or zero) reading background color
+#define TFT_NEG_COLOR TFT_RED   //!< Negative reading background color
+
+#define TFT_SPR_ADD_OFF 38 //!< Reading first character indentation from frame
+
+#define TFT_SPR_SML_F FruBoldNarrow34 //!< Small (unfocused) reading font
+#define TFT_SPR_SML_W 120             //!< Small (unfocused) sprite width
+#define TFT_SPR_SML_H 33              //!< Small (unfocused) sprite heigth
+
+#define TFT_SPR_BIG_F FruBoldNarrow54 //!< Big (focused) reading font
+#define TFT_SPR_BIG_W 165             //!< Big (focused) sprite width
+#define TFT_SPR_BIG_H 48              //!< Big (focused) sprite heigth
+
+#define TFT_SPR_MEA_F FruBoldNarrow34 //!< Measurement units reading font
+#define TFT_SPR_MEA_W 32              //!< Measurement units sprite width
+#define TFT_SPR_MEA_H 33              //!< Measurement units sprite heigth
+#define TFT_SPR_MEA_X_DISP 200        //!< Measurement units displacement from left frame
+#define TFT_SPR_MEA_X_DISP_BIG 7      //!< Measurement units
+
+#define TFT_YN -1       //!< First Line y
+#define TFT_Y1 53       //!< First Line y
+#define TFT_Y2 84       //!< Second Line y
+#define TFT_Y3 115      //!< Third Line y
+#define TFT_FC 193      //!< Focused Line y
+#define TFT_FL_DISPL 44 //!< Fourth Line y displacement
+#define TFT_ATZERO 0, 0
+
 ///@}
 /*! 
  *  @brief     Readings class.
@@ -106,8 +144,9 @@ public:
      * 
      * @param[in] Label Data to be read
      * @param[in] Unit Data measurement unit
+     * @param[in] Y Data measurement unit
      */
-    reading(const char *Label = "Unk", const char *Unit = "V");
+    reading(const char *Label, const char *Unit, int Y);
     /**
      * @brief  Reset reading to default (empty) values.
      * 
@@ -163,15 +202,26 @@ public:
      */
     bool getHoldingMode();
     /**
+     * @brief Get current Reading Measurement Unit
+     * 
+     * @return char* Current Measurement Unit
+     */
+    char *getMeasurementUnit();
+    /**
+     * @brief Get current Reading y tft print line
+     * 
+     * @return bool Current Holding Mode y tft print line
+     */
+    uint16_t gety();
+    /**
      * @brief Set the TFT Panel for output
      * 
      * @remark Set the TFT Panel used for data output
      * 
      * @param[in] TFT_eSPI object referencing TFT Panel
-     * @param[in] Width TFT Panel Width
-     * @param[in] Height TFT Panel Height
+     * @param[in] TFT_eSprite object referencing TFT Sprite
      */
-    void setTFT(TFT_eSPI *tft, uint16_t Width, uint16_t Height);
+    void setTFT(TFT_eSPI *tft, TFT_eSprite *spr);
 
 private:
     /**
@@ -210,7 +260,9 @@ private:
     uint8_t _SerialPrints; //!< Serial Printout Mode (No print, machine parsed, human readable)
     bool _focus;           //!< This is the current focused reading
     bool _hold;            //!< Hold mode (retain values)
+    uint16_t _y;           //!< TFT y display coordinate
     TFT_eSPI *_tft;        //!< TFT Display
+    TFT_eSprite *_spr;     //!< TFT Display Sprite
     uint16_t _tft_width;   //!< TFT Width (x)
     uint16_t _tft_height;  //!< TFT Width (y)
 };
@@ -245,7 +297,8 @@ private:
 ///@{
 #define D_OFF 0     //!<Serial output disabled
 #define D_MACHINE 1 //!<Serial output is intended to be parsed by an automatic parser (machine)
-#define D_HUMAN 2   //!<Serial will output is intended to be read from an human operator (colors, readable layout)
+#define D_REDUCED 2 //!<Serial will output is intended to be read from an human operator (colors, readable layout)
+#define D_HUMAN 3   //!<Serial will output is intended to be read from an human operator (colors, readable layout)
 ///@}
 
 /** @name Reading Defaults
@@ -295,15 +348,17 @@ public:
      * 
      * @internal Reserved data
      * 
+     * @param[in] TFT_eSPI Output TFT Panel Reference 
      * @param[in] SerialMode SerialMode Serial Mode
+     * @param[in] Bitmap The type of requested reading (bus voltage, shunt voltage, load current, load power)
      * 
      * @return true Init Ok
      * @return false Init failed (i2c bus problems?)
      */
-    bool setup(uint8_t SerialMode);
+    bool setup(TFT_eSPI *tft, uint8_t SerialMode, int Bitmap);
     /**
-     * @brief Read a new dataset
-     * 
+     * @brief Complete Powertest Object settings
+     *  
      * @param[in] Rm High Speed Reading or read on refresh only
      * 
      */
@@ -337,14 +392,6 @@ public:
      * @return bool Current Output Mode 
      */
     bool setOutputMode(bool OutputMode);
-    /**
-     * @brief Notifies to Reading object Output TFT Panel Object 
-     * 
-     * @param[in] TFT_eSPI Output TFT Panel Reference 
-     * 
-     * @return bool Always true 
-     */
-    void setTFT(TFT_eSPI *tft);
 
 private:
     char _Id[8];                      //!< INA219 Chip Label
@@ -353,11 +400,14 @@ private:
     int _Xoffset;                     //!< TFT Horizontal Offset for PSU
     bool _Output;                     //!< Output is connected ...
     uint8_t _OutPin;                  //!< The pin driving output relay
+    std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
     uint8_t _SerialPrints;            //!< Serial Printout Mode (No print, machine parsed, human readable)
     TFT_eSPI *_tft;                   //!< TFT Display
+    TFT_eSprite *_spr_big;            //!< TFT Display Sprite (LARGE FONT)
+    TFT_eSprite *_spr_small;          //!< TFT Display Sprite (SMALL FONT)
+    TFT_eSprite *_spr_measunit;       //!< TFT Display Sprite (MEASUREMENT UNIY)
     uint16_t _tft_width;              //!< TFT Width (x)
     uint16_t _tft_height;             //!< TFT Width (y)
-    std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
     std::array<reading, 5> _Readings; //!< INA219 Reading fields
 };
 

@@ -1,21 +1,23 @@
 #include "Arduino.h"
 #include "powertester.h"
-#include "Free_Fonts.h"
 
 // #include <iostream>
 // std::cout << "---> Rm: (" << Rm << ") GRM: [" << _ReadMask << "] LRM: [" << LocalReadMask << "]" << std::endl;
+
+#define UPDATE_TFT
 
 static void _PrSet(int Value, PrintRead *Pr);
 
 // --------------------------------
 // READING - Public
 // --------------------------------
-reading::reading(const char *Label, const char *Unit) : _IR_min(R_DEF_MIN),
-                                                        _IR_pile(R_DEF_PILE),
-                                                        _IR_max(R_DEF_MAX),
-                                                        _IR_reads(R_DEF_READS),
-                                                        _focus(false),
-                                                        _hold(NO_HOLD_MODE)
+reading::reading(const char *Label, const char *Unit, int Y) : _IR_min(R_DEF_MIN),
+                                                               _IR_pile(R_DEF_PILE),
+                                                               _IR_max(R_DEF_MAX),
+                                                               _IR_reads(R_DEF_READS),
+                                                               _focus(false),
+                                                               _hold(NO_HOLD_MODE),
+                                                               _y(Y)
 {
     strncpy(_Unit, Unit, 8);
     strncpy(_Label, Label, 4);
@@ -35,6 +37,8 @@ void reading::reset()
 
 void reading::set(float ReadData)
 {
+    //if (ReadData >= 0)
+    //{
     _IR_reads++;
 
     _IR_pile += ReadData;
@@ -48,55 +52,63 @@ void reading::set(float ReadData)
     {
         _IR_min = ReadData;
     }
+    //}
 }
 
 void reading::display(Stream *S, int Xoff, int BgColor)
 {
+    bool tftUpdate = false;
+
+#ifdef UPDATE_TFT
+    if (_y >= 0)
+    {
+        tftUpdate = true;
+    }
+#endif
+
     PrintRead PrMean;
     _PrSet(_get_mean(), &PrMean);
 
-    _tft->setTextColor(TFT_BLACK, BgColor);
-    _tft->setTextPadding(180);
-    _tft->setTextDatum(ML_DATUM);
+    _spr->fillSprite(BgColor);
 
-    if (_focus)
+    if (_focus) // Focused HiSpeed reading
     {
-        // Focused HiSpeed reading
-
-        char Linea[16];
-
         PrintRead PrMin;
         PrintRead PrMax;
+
+        // Prepare specifical data for display
         _PrSet(_get_min(), &PrMin);
         _PrSet(_get_max(), &PrMax);
 
-        _tft->setFreeFont(TFT_BC);
-
-        if (_hold)
+        // Tft Update
+        if (tftUpdate)
         {
-            sprintf(Linea, "%c%s.%s", PrMin.Sign, PrMin.Int, PrMin.Fract);
-            _tft->drawString(Linea, Xoff + 2, TFT_Y2, GFXFF);
-        }
-        else
-        {
-            _tft->drawString("", Xoff + 2, TFT_Y2, GFXFF);
+            // Print MaxValue
+            if (_hold)
+            {
+                _spr->fillSprite(BgColor);
+                _spr->setTextColor((PrMax.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
+                _spr->drawString(String(PrMax.Int) + "." + String(PrMax.Fract), TFT_ATZERO);
+                _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y - TFT_FL_DISPL);
+            }
+
+            // Print MaxValue
+            _spr->fillSprite(BgColor);
+            _spr->setTextColor((PrMean.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
+            _spr->drawString(String(PrMean.Int) + "." + String(PrMean.Fract), TFT_ATZERO);
+            _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y);
+
+            // Print MinValue
+            if (_hold)
+            {
+                _spr->fillSprite(BgColor);
+                _spr->setTextColor((PrMin.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
+                _spr->drawString(String(PrMin.Int) + "." + String(PrMin.Fract), TFT_ATZERO);
+                _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y + TFT_FL_DISPL);
+            }
         }
 
-        sprintf(Linea, "%c%s.%s", PrMean.Sign, PrMean.Int, PrMean.Fract);
-        _tft->setFreeFont(TFT_BC);
-        _tft->drawString(Linea, Xoff + 2, TFT_Y3, GFXFF);
-
-        _tft->setFreeFont(TFT_BC);
-        if (_hold)
-        {
-            sprintf(Linea, "%c%s.%s", PrMax.Sign, PrMax.Int, PrMax.Fract);
-            _tft->drawString(Linea, Xoff + 2, TFT_Y4, GFXFF);
-        }
-        else
-        {
-            _tft->drawString("", Xoff + 2, TFT_Y4, GFXFF);
-        }
-
+        // Serial results printing
         if (_SerialPrints == D_HUMAN)
         {
             S->printf("<%s: (" N_CYA "%03d" RESET ")  %s  %s%s.%s" RESET "    %s%s.%s" RESET "    %s%s.%s" B_YEL "    %s" RESET ">  ",
@@ -116,29 +128,23 @@ void reading::display(Stream *S, int Xoff, int BgColor)
                       PrMean.Sign, PrMean.Int, PrMean.Fract,
                       PrMax.Sign, PrMax.Int, PrMax.Fract);
         }
+        else if (_SerialPrints == D_REDUCED)
+        {
+            S->printf("%u:%d", millis(), _get_reads());
+        }
     }
-    else
+    else // Non Focused Slow Speed reading
     {
-        char Linea[16];
-        _tft->setFreeFont(TFT_LC);
-        sprintf(Linea, "%c%s.%s", PrMean.Sign, PrMean.Int, PrMean.Fract);
-
-        if (strcmp(_Label, "BU") == 0)
+        // Tft Update
+        if (tftUpdate)
         {
-            _tft->drawString(Linea, Xoff + 2, TFT_Y0, GFXFF);
+            _spr->fillSprite(BgColor);
+            _spr->setTextColor((PrMean.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
+            _spr->drawString(String(PrMean.Int) + "." + String(PrMean.Fract), TFT_ATZERO);
+            _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y);
         }
 
-        if (strcmp(_Label, "LD") == 0)
-        {
-            _tft->drawString(Linea, Xoff + 2, TFT_Y1, GFXFF);
-        }
-
-        if (strcmp(_Label, "PW") == 0)
-        {
-            _tft->drawString(Linea, Xoff + 2, TFT_Y5, GFXFF);
-        }
-
-        // Unfocused _display-refresh-only_ reading
+        // Serial results printing
         if (_SerialPrints == D_HUMAN)
         {
             S->printf("<%s: %s%s.%s" B_YEL " %s" RESET ">  ",
@@ -148,7 +154,6 @@ void reading::display(Stream *S, int Xoff, int BgColor)
         }
         else if (_SerialPrints == D_MACHINE)
         {
-
             S->printf("C;%c%s.%s;", PrMean.Sign, PrMean.Int, PrMean.Fract);
         }
     }
@@ -176,11 +181,16 @@ bool reading::setHoldingMode(bool HoldingMode)
 
 bool reading::getHoldingMode() { return (_hold); }
 
-void reading::setTFT(TFT_eSPI *tft, uint16_t Width, uint16_t Height)
+char *reading::getMeasurementUnit() { return (_Unit); }
+
+uint16_t reading::gety() { return (_y); }
+
+void reading::setTFT(TFT_eSPI *tft, TFT_eSprite *spr)
 {
     _tft = tft;
-    _tft_width = Width;
-    _tft_height = Height;
+    _tft_width = tft->width();
+    _tft_height = tft->width();
+    _spr = spr;
 }
 
 // --------------------------------
@@ -217,20 +227,25 @@ powertester::powertester(uint8_t i2c_address, const char *Id, int Xoff, uint8_t 
                                                                                           _Active(false),
                                                                                           _Xoffset(Xoff),
                                                                                           _Output(false),
-                                                                                          _OutPin(OutPin)
+                                                                                          _OutPin(OutPin),
+                                                                                          _Readings({reading("BU", "V", TFT_Y1),
+                                                                                                     reading("SH", "mV", TFT_YN),
+                                                                                                     reading("LD", "V", TFT_Y2),
+                                                                                                     reading("CU", "A", TFT_FC),
+                                                                                                     reading("PW", "W", TFT_Y3)})
 {
-    // Initalizing Reading
-    _Readings = {reading("BU"), reading("SH", "mV"), reading("LD"), reading("CU", "mA"), reading("PW", "mW")};
-
     // Initialize Read Mode
     _ReadMask.reset();
     _ReadMask.set(IR_CURR);
+
     // Setting Powertester Identificator
     strncpy(_Id, Id, 8);
 }
 
-bool powertester::setup(uint8_t SerialMode)
+bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap = IR_CURR)
 {
+    int i = 0;
+
     // Initalizing INA219 chip
     if (!begin())
     {
@@ -250,47 +265,45 @@ bool powertester::setup(uint8_t SerialMode)
             Serial.printf("* INA219 : Addr: 0x%X ......... [" N_GRE "Set: : 16V, 400mA range" RESET "]\n", _Address);
     }
 
+    _tft = tft;
+
+    // Superior Icons Board
+    _tft->pushImage(10 + _Xoffset, 10, IconHold_width, IconHold_height, IconHold);
+    _tft->pushImage(50 + _Xoffset, 10, IconNoHold_width, IconNoHold_height, IconNoHold);
+    _tft->pushImage(150 + _Xoffset, 10, IconRelay_width, IconRelay_height, IconRelay);
+    _tft->pushImage(190 + _Xoffset, 10, IconCutoff_width, IconCutoff_height, IconCutoff);
+
+    _spr_small = new TFT_eSprite(_tft);
+    _spr_small->createSprite(TFT_SPR_SML_W, TFT_SPR_SML_H);
+    _spr_small->setColorDepth(16);
+    _spr_small->loadFont(TFT_SPR_SML_F);
+    _spr_small->setTextDatum(TL_DATUM);
+
+    _spr_big = new TFT_eSprite(_tft);
+    _spr_big->createSprite(TFT_SPR_BIG_W, TFT_SPR_BIG_H);
+    _spr_big->setColorDepth(16);
+    _spr_big->loadFont(TFT_SPR_BIG_F);
+    _spr_big->setTextDatum(TL_DATUM);
+
+    _spr_measunit = new TFT_eSprite(_tft);
+    _spr_measunit->createSprite(TFT_SPR_MEA_W, TFT_SPR_MEA_H);
+    _spr_measunit->setColorDepth(16);
+    _spr_measunit->loadFont(TFT_SPR_MEA_F);
+    _spr_measunit->setTextDatum(TL_DATUM);
+
     _SerialPrints = SerialMode;
-
-    for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
-    {
-        it->setSerialPrints(SerialMode);
-    }
-
-    return (_Active);
-}
-
-void powertester::setReading(int Bitmap = IR_CURR)
-{
-    int i = 0;
 
     std::bitset<32> TBS(Bitmap);
     _ReadMask = TBS;
 
-    // Set New Readings Focus()
-    for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
+    for (auto Curr_Reading = _Readings.begin(); Curr_Reading != _Readings.end(); ++Curr_Reading)
     {
-        it->setFocus(_ReadMask[i++]);
+        Curr_Reading->setSerialPrints(_SerialPrints);
+        Curr_Reading->setTFT(_tft, (_ReadMask[i]) ? _spr_big : _spr_small);
+        Curr_Reading->setFocus(_ReadMask[i++]);
     }
-}
 
-void powertester::setTFT(TFT_eSPI *tft)
-{
-    _tft = tft;
-    _tft_width = tft->width();
-    _tft_height = tft->height();
-
-    tft->setSwapBytes(true);
-    tft->pushImage(10 + _Xoffset, 8, infoWidth, infoHeight, info);
-    tft->pushImage(50 + _Xoffset, 8, alertWidth, alertHeight, alert);
-    tft->pushImage(90 + _Xoffset, 8, closeWidth, closeHeight, closeX);
-    tft->setSwapBytes(false);
-
-    // Set New Readings Focus()
-    for (auto it = _Readings.begin(); it != _Readings.end(); ++it)
-    {
-        it->setTFT(tft, _tft_width, _tft_height);
-    }
+    return (_Active);
 }
 
 void powertester::update(uint16_t Rm = IM_RECURR)
@@ -345,8 +358,7 @@ void powertester::display(Stream *S)
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        it->display(S, _Xoffset, (_Output) ? TFT_GREEN : TFT_RED);
-        //it->display(S, _Xoffset, (_Output) ? TFT_RED : TFT_GREEN);
+        it->display(S, _Xoffset, (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
         it->reset();
     }
     S->println("");
@@ -356,7 +368,6 @@ bool powertester::setHoldingMode(bool HoldingMode)
 {
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        //if (it->hasFocus())
         it->setHoldingMode(HoldingMode);
     }
 
@@ -367,7 +378,34 @@ bool powertester::setOutputMode(bool OutputMode)
 {
     _Output = OutputMode;
 
-    _tft->fillRect(_Xoffset + 1, 50, _Xoffset + 225, 266, (_Output) ? TFT_GREEN : TFT_RED);
+    uint32_t BgColor = (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR;
+
+    _tft->fillRect(_Xoffset, 50, 233, 234, BgColor);
+
+    for (auto Curr_Reading = _Readings.begin(); Curr_Reading != _Readings.end(); ++Curr_Reading)
+    {
+        _spr_measunit->fillSprite(BgColor);
+        _spr_measunit->setTextColor(TFT_BLUE, BgColor);
+        _spr_measunit->drawString(String(Curr_Reading->getMeasurementUnit()), 0, 0);
+
+        if (Curr_Reading->hasFocus())
+        {
+            _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety() - TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG);
+            _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety() + TFT_SPR_MEA_X_DISP_BIG);
+            _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety() + TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG);
+        }
+        else
+        {
+            _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety());
+        }
+    }
+
+    _tft->pushImage(_Xoffset + 2, TFT_Y1, IconBus_width, IconBus_height, IconBus, 0);
+    _tft->pushImage(_Xoffset + 2, TFT_Y2, IconLoad_width, IconLoad_height, IconLoad, 0);
+    _tft->pushImage(_Xoffset + 2, TFT_Y3, IconPower_width, IconPower_height, IconPower, 0);
+    _tft->pushImage(_Xoffset + 2, TFT_FC - TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG, IconCurrent_Max_width, IconCurrent_Max_height, IconCurrent_Max, 0);
+    _tft->pushImage(_Xoffset + 2, TFT_FC + TFT_SPR_MEA_X_DISP_BIG, IconCurrent_width, IconCurrent_height, IconCurrent, 0);
+    _tft->pushImage(_Xoffset + 2, TFT_FC + TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG, IconCurrent_Min_width, IconCurrent_Min_height, IconCurrent_Min, 0);
 
     return (_Output);
 }
