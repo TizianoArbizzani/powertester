@@ -23,7 +23,9 @@
 #include "icons/readings/Current_Min.h"
 #include "icons/readings/Current.h"
 #include "icons/readings/Current_Max.h"
-
+#include "icons/units/A.h"
+#include "icons/units/V.h"
+#include "icons/units/W.h"
 ///@}
 
 /** @name Fonts
@@ -115,8 +117,10 @@ typedef struct
 #define TFT_SPR_MEA_F FruBoldNarrow34 //!< Measurement units reading font
 #define TFT_SPR_MEA_W 32              //!< Measurement units sprite width
 #define TFT_SPR_MEA_H 33              //!< Measurement units sprite heigth
-#define TFT_SPR_MEA_X_DISP 200        //!< Measurement units displacement from left frame
-#define TFT_SPR_MEA_X_DISP_BIG 7      //!< Measurement units
+#define TFT_SPR_MEA_X_DISP 205        //!< Measurement units displacement from left frame
+#define TFT_SPR_MEA_X_DISP_BIG 11     //!< Measurement units
+
+#define TFT_SPR_BAR_WIDTH 190
 
 #define TFT_YN -1       //!< First Line y
 #define TFT_Y1 53       //!< First Line y
@@ -146,7 +150,7 @@ public:
      * @param[in] Unit Data measurement unit
      * @param[in] Y Data measurement unit
      */
-    reading(const char *Label, const char *Unit, int Y);
+    reading(const char *Label, const char *Unit, int Y, const unsigned short *Icon);
     /**
      * @brief  Reset reading to default (empty) values.
      * 
@@ -219,9 +223,10 @@ public:
      * @remark Set the TFT Panel used for data output
      * 
      * @param[in] TFT_eSPI object referencing TFT Panel
-     * @param[in] TFT_eSprite object referencing TFT Sprite
+     * @param[in] TFT_eSprite object referencing TFT Sprite (READING)
+     * @param[in] TFT_eSprite object referencing TFT Sprite (BAR)
      */
-    void setTFT(TFT_eSPI *tft, TFT_eSprite *spr);
+    void setTFT(TFT_eSPI *tft, TFT_eSprite *spr, TFT_eSprite *bar);
 
 private:
     /**
@@ -257,14 +262,16 @@ private:
     int _IR_max;   //!< Maximum value read
     int _IR_reads; //!< Number of readings
 
-    uint8_t _SerialPrints; //!< Serial Printout Mode (No print, machine parsed, human readable)
-    bool _focus;           //!< This is the current focused reading
-    bool _hold;            //!< Hold mode (retain values)
-    uint16_t _y;           //!< TFT y display coordinate
-    TFT_eSPI *_tft;        //!< TFT Display
-    TFT_eSprite *_spr;     //!< TFT Display Sprite
-    uint16_t _tft_width;   //!< TFT Width (x)
-    uint16_t _tft_height;  //!< TFT Width (y)
+    uint8_t _SerialPrints;              //!< Serial Printout Mode (No print, machine parsed, human readable)
+    bool _focus;                        //!< This is the current focused reading
+    bool _hold;                         //!< Hold mode (retain values)
+    uint16_t _y;                        //!< TFT y display coordinate
+    TFT_eSPI *_tft;                     //!< TFT Display
+    TFT_eSprite *_spr;                  //!< TFT Display Sprite (READING)
+    TFT_eSprite *_bar;                  //!< TFT Display Sprite (BAR)
+    uint16_t _tft_width;                //!< TFT Width (x)
+    uint16_t _tft_height;               //!< TFT Width (y)
+    const unsigned short *_tft_MU_icon; //!< TFT Width (y)
 };
 
 /** @name Readings
@@ -405,7 +412,9 @@ private:
     TFT_eSPI *_tft;                   //!< TFT Display
     TFT_eSprite *_spr_big;            //!< TFT Display Sprite (LARGE FONT)
     TFT_eSprite *_spr_small;          //!< TFT Display Sprite (SMALL FONT)
-    TFT_eSprite *_spr_measunit;       //!< TFT Display Sprite (MEASUREMENT UNIY)
+    TFT_eSprite *_spr_leftbutton;     //!< TFT Display Sprite (LEFT BUTTON - RELAY)
+    TFT_eSprite *_spr_rightbutton;    //!< TFT Display Sprite (RIGHT BUTTON - HOLD)
+    TFT_eSprite *_spr_databar;        //!< TFT Display Sprite (DATABAR)
     uint16_t _tft_width;              //!< TFT Width (x)
     uint16_t _tft_height;             //!< TFT Width (y)
     std::array<reading, 5> _Readings; //!< INA219 Reading fields

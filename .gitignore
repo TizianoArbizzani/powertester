@@ -4,7 +4,9 @@
 .vscode/launch.json
 .vscode/ipch
 
-lib/powertester/docs
+lib/powertester/docs/html
+data
+fonts
 
 # Prerequisites
 *.d
