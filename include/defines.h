@@ -14,9 +14,8 @@
 #define RIGHT_OFFSET 242     //!< X value for right PSU Data
 #define RIGHT_OUTPIN 32      //!< Right PSU Data output relay driving pin
 
-#define TFT_UPDATES_MS 500    //!<TFT Update frequency in milliseconds
-#define TFT_TOUCH_MS 250      //!<Grace time between touch events
-#define DBG_SWITCH_HOLD 30000 //!<TFT Update frequency in milliseconds
+#define TFT_UPDATES_MS 500 //!<TFT Update frequency in milliseconds
+#define TFT_TOUCH_MS 250   //!<Grace time between touch events
 
 #define CALIBRATION_FILE "/calibrationData" //!<TFT calibration file
 

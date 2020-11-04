@@ -182,9 +182,22 @@ void reading::setSerialPrints(uint8_t SerialMode)
     _SerialPrints = SerialMode;
 }
 
-bool reading::setHoldingMode(bool HoldingMode)
+bool reading::setHoldingMode(bool HoldingMode, uint32_t BgColor, int Xoff)
 {
     _hold = HoldingMode;
+
+    _spr->fillSprite(BgColor);
+    _spr->setTextColor(TFT_BLACK, BgColor);
+    _spr->drawString("", TFT_ATZERO);
+    if (_focus)
+    {
+        _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y - TFT_FL_DISPL);
+        _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y + TFT_FL_DISPL);
+    }
+    else
+    {
+        _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y);
+    }
 
     return (_hold);
 }
@@ -238,6 +251,7 @@ powertester::powertester(uint8_t i2c_address, const char *Id, int Xoff, uint8_t 
                                                                                           _Active(false),
                                                                                           _Xoffset(Xoff),
                                                                                           _Output(false),
+                                                                                          _HoldingMode(false),
                                                                                           _OutPin(OutPin),
                                                                                           _Readings({reading("BU", "V", TFT_Y1, IconV),
                                                                                                      reading("SH", "mV", TFT_YN, IconV),
@@ -296,7 +310,6 @@ bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap 
     _spr_leftbutton->loadFont(TFT_SPR_SML_F);
     _spr_leftbutton->setTextDatum(TL_DATUM);
     _spr_leftbutton->fillSprite(TFT_BLACK);
-    _spr_leftbutton->fillRoundRect(0, 0, 116, 45, 8, TFT_BLACK);
 
     _spr_rightbutton = new TFT_eSprite(_tft);
     _spr_rightbutton->setColorDepth(16);
@@ -304,7 +317,6 @@ bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap 
     _spr_rightbutton->loadFont(TFT_SPR_SML_F);
     _spr_rightbutton->setTextDatum(TL_DATUM);
     _spr_rightbutton->fillSprite(TFT_BLACK);
-    _spr_rightbutton->fillRoundRect(0, 0, 116, 45, 8, TFT_BLACK);
 
     _spr_databar = new TFT_eSprite(_tft);
     _spr_databar->setColorDepth(16);
@@ -318,8 +330,6 @@ bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap 
 
     std::bitset<32> TBS(Bitmap);
     _ReadMask = TBS;
-
-    setHoldingMode(false);
 
     for (auto Curr_Reading = _Readings.begin(); Curr_Reading != _Readings.end(); ++Curr_Reading)
     {
@@ -391,23 +401,27 @@ void powertester::display(Stream *S)
 
 bool powertester::setHoldingMode(bool HoldingMode)
 {
+    _HoldingMode = HoldingMode;
+    uint32_t RingColor = (_Output) ? TFT_DARKGREEN : TFT_MAROON;
+    _spr_rightbutton->fillRoundRect(0, 0, 116, 45, 8, RingColor);
+
     if (HoldingMode)
     {
-        _spr_rightbutton->setTextColor(TFT_BLACK, TFT_RED);
-        _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_RED);
+        _spr_rightbutton->setTextColor(TFT_BLACK, TFT_GREEN);
+        _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_GREEN);
         _spr_rightbutton->drawString("Hold", 10, 7);
     }
     else
     {
-        _spr_rightbutton->setTextColor(TFT_BLACK, TFT_GREEN);
-        _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_GREEN);
+        _spr_rightbutton->setTextColor(TFT_BLACK, TFT_RED);
+        _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_RED);
         _spr_rightbutton->drawString("Hold", 10, 7);
     }
     _spr_rightbutton->pushSprite(_Xoffset + 117, 4);
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        it->setHoldingMode(HoldingMode);
+        it->setHoldingMode(HoldingMode, (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR, _Xoffset);
     }
 
     return (HoldingMode);
@@ -418,40 +432,26 @@ bool powertester::setOutputMode(bool OutputMode)
     _Output = OutputMode;
 
     uint32_t BgColor = (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR;
+    uint32_t RingColor = (_Output) ? TFT_DARKGREEN : TFT_MAROON;
 
     _tft->fillRect(_Xoffset, 50, 233, 235, BgColor);
+    _spr_leftbutton->fillRoundRect(0, 0, 116, 45, 8, RingColor);
 
     if (OutputMode)
     {
         _spr_leftbutton->setTextColor(TFT_BLACK, TFT_GREEN);
         _spr_leftbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_GREEN);
         _spr_leftbutton->drawString("On", 10, 7);
+        RELAY_THROW(_OutPin);
     }
     else
     {
         _spr_leftbutton->setTextColor(TFT_BLACK, TFT_RED);
         _spr_leftbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_RED);
         _spr_leftbutton->drawString("Off", 10, 7);
+        RELAY_RELEASE(_OutPin);
     }
     _spr_leftbutton->pushSprite(_Xoffset, 4);
-
-    // for (auto Curr_Reading = _Readings.begin(); Curr_Reading != _Readings.end(); ++Curr_Reading)
-    // {
-    //     _spr_measunit->fillSprite(BgColor);
-    //     _spr_measunit->setTextColor(TFT_BLUE, BgColor);
-    //     _spr_measunit->drawString(String(Curr_Reading->getMeasurementUnit()), 0, 0);
-
-    //     if (Curr_Reading->hasFocus())
-    //     {
-    //         _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety() - TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG);
-    //         _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety() + TFT_SPR_MEA_X_DISP_BIG);
-    //         _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety() + TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG);
-    //     }
-    //     else
-    //     {
-    //         _spr_measunit->pushSprite(_Xoffset + TFT_SPR_MEA_X_DISP, Curr_Reading->gety());
-    //     }
-    // }
 
     _tft->pushImage(_Xoffset + 2, TFT_Y1, IconBus_width, IconBus_height, IconBus, 0);
     _tft->pushImage(_Xoffset + 2, TFT_Y2, IconLoad_width, IconLoad_height, IconLoad, 0);
@@ -468,6 +468,16 @@ bool powertester::setOutputMode(bool OutputMode)
     _tft->pushImage(_Xoffset + TFT_SPR_MEA_X_DISP, TFT_FC + TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG, 0x18, 0x18, IconA, 0);
 
     return (_Output);
+}
+
+bool powertester::getOutputMode()
+{
+    return (_Output);
+}
+
+bool powertester::getHoldingMode()
+{
+    return (_HoldingMode);
 }
 
 // --------------------------------

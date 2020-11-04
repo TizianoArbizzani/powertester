@@ -90,6 +90,8 @@ typedef struct
  */
 ///@{
 #define RS(X) (1 << (X))
+#define RELAY_THROW(P) digitalWrite((P), LOW)    //!<Relay Throw
+#define RELAY_RELEASE(P) digitalWrite((P), HIGH) //!<Relay Release
 ///@}
 
 /** @name TFT Settings
@@ -195,10 +197,12 @@ public:
      * @brief Set Holding Mode for current Reading
      * 
      * @param[in] HoldingMode Holding Mode (Min/Max must be reset or not ...)
+     * @param[in] BgColor Background color
+     * @param[in] Xoff X Offset
      * 
      * @return bool Current (set) Holding Mode 
      */
-    bool setHoldingMode(bool HoldingMode);
+    bool setHoldingMode(bool HoldingMode, uint32_t BgColor, int Xoff);
     /**
      * @brief Set Holding Mode for current Reading
      * 
@@ -384,6 +388,12 @@ public:
      */
     void display(Stream *S);
     /**
+     * @brief Get Holding Mode
+     * 
+     * @return bool Current Holding Mode 
+     */
+    bool getHoldingMode();
+    /**
      * @brief Set Holding Mode for current Reading
      * 
      * @param[in] HoldingMode Holding Mode (Min/Max must be reset or not ...)
@@ -399,6 +409,12 @@ public:
      * @return bool Current Output Mode 
      */
     bool setOutputMode(bool OutputMode);
+    /**
+     * @brief Get output line status
+     * 
+     * @return bool Current Output Mode 
+     */
+    bool getOutputMode();
 
 private:
     char _Id[8];                      //!< INA219 Chip Label
@@ -406,6 +422,7 @@ private:
     bool _Active;                     //!< INA219 is active (I2C Reachable??)
     int _Xoffset;                     //!< TFT Horizontal Offset for PSU
     bool _Output;                     //!< Output is connected ...
+    bool _HoldingMode;                //!< Holding mode
     uint8_t _OutPin;                  //!< The pin driving output relay
     std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
     uint8_t _SerialPrints;            //!< Serial Printout Mode (No print, machine parsed, human readable)

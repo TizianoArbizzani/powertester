@@ -8,8 +8,6 @@
 #include <defines.h>
 #include <macros.h>
 
-//#define RELAY_TEST
-
 // Global objects
 TFT_eSPI tft = TFT_eSPI();                                                     //!<TFT Display
 powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OFFSET, LEFT_OUTPIN);      //!<Left INA219 Chip (Left PSU)
@@ -17,9 +15,8 @@ powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OFFSET, RIGHT_OUTPIN); /
 TFT_eSprite spr = TFT_eSprite(&tft);                                           // Sprite class needs to be invoked
 
 // Global variables - Timings
-unsigned long NextPrint;      //!<Time to go for next TFT Update
-unsigned long NextTouch;      //!<Time to go for next Touch Reading
-unsigned long NextHoldSwitch; //!<Time to go for next switch from hold or not hold
+unsigned long NextPrint; //!<Time to go for next TFT Update
+unsigned long NextTouch; //!<Time to go for next Touch Reading
 
 // Global variables - Generic
 uint8_t PrintMode = D_REDUCED; //!<Serial printing verbose mode
@@ -69,29 +66,6 @@ void setup(void)
     Serial.printf("* SYS    : Initialized serial ... [Start: " B_GRE "%u " RESET "Bps]\r\n", SERIALSPEED);
     Serial.printf("* SYS    : Revision 001 ....... [" N_GRE "%s" RESET "]\r\n", PIO_SRC_REV);
   }
-
-#ifdef RELAY_TEST
-  RELAY_THROW(LEFT_OUTPIN);
-  RELAY_THROW(RIGHT_OUTPIN);
-
-  delay(250);
-
-  RELAY_RELEASE(LEFT_OUTPIN);
-  RELAY_RELEASE(RIGHT_OUTPIN);
-
-  delay(250);
-
-  RELAY_THROW(LEFT_OUTPIN);
-  RELAY_THROW(RIGHT_OUTPIN);
-
-  delay(250);
-
-  RELAY_RELEASE(LEFT_OUTPIN);
-  RELAY_RELEASE(RIGHT_OUTPIN);
-
-  if (PrintMode >= D_REDUCED)
-    Serial.printf("* Relay  : Test ............... [" B_GRE "Done" RESET "]\r\n");
-#endif
 
   if (!SPIFFS.begin())
   {
@@ -191,13 +165,18 @@ void setup(void)
   DrawMask();
 
   PT_Left.setOutputMode(OUTPUT_CUTOFF);
-  PT_Right.setOutputMode(OUTPUT_ACTIVE);
+  PT_Right.setOutputMode(OUTPUT_CUTOFF);
 
   if (PrintMode >= D_REDUCED)
     Serial.printf("* SUPPLY : Output at Start .... [" B_YEL "Cut Off" RESET "]\r\n");
 
+  PT_Left.setHoldingMode(false);
+  PT_Right.setHoldingMode(false);
+
+  if (PrintMode >= D_REDUCED)
+    Serial.printf("* SUPPLY : Hold at Start ...... [" B_YEL "Off" RESET "]\r\n");
+
   NextPrint = millis() + TFT_UPDATES_MS;
-  NextHoldSwitch = millis() + DBG_SWITCH_HOLD;
   NextTouch = millis();
 
   attachInterrupt(TFT_INTPIN, TouchDetected, FALLING);
@@ -234,10 +213,10 @@ void loop(void)
         Serial.printf("* TOUCH  : Correct ... [X:%u Y:%u]\r\n", Tx, Ty);
         TouchManager();
       }
-      else
-      {
-        Serial.printf("* TOUCH  : Repeated ... [X:%u Y:%u]\r\n", Tx, Ty);
-      }
+      //else
+      //{
+      //  Serial.printf("* TOUCH  : Repeated ... [X:%u Y:%u]\r\n", Tx, Ty);
+      //}
     }
 
     portENTER_CRITICAL(&mux);
@@ -271,20 +250,6 @@ void loop(void)
   }
 
   //-----------------------------------------------
-  // Switch hold mode (DEBUG)
-  //-----------------------------------------------
-
-  if (millis() >= NextHoldSwitch)
-  {
-    NextHoldSwitch = millis() + DBG_SWITCH_HOLD;
-
-    CurHoldingMode = !CurHoldingMode;
-
-    PT_Left.setHoldingMode(CurHoldingMode);
-    PT_Right.setHoldingMode(CurHoldingMode);
-  }
-
-  //-----------------------------------------------
   // Main Loop End
   //-----------------------------------------------
 }
@@ -307,4 +272,25 @@ void IRAM_ATTR TouchDetected()
 
 void TouchManager()
 {
+  if (Ty < 50)
+  {
+    switch (Tx / 120)
+    {
+    case 0:
+      PT_Left.setOutputMode(!PT_Left.getOutputMode());
+      break;
+    case 1:
+      PT_Left.setHoldingMode(!PT_Left.getHoldingMode());
+      break;
+    case 2:
+      PT_Right.setOutputMode(!PT_Right.getOutputMode());
+      break;
+    case 3:
+      PT_Right.setHoldingMode(!PT_Right.getHoldingMode());
+      break;
+    default:
+      Serial.printf("* TOUCH  : Button .... [UNKNOWN]\r\n");
+      break;
+    }
+  }
 }
