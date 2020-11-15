@@ -1,27 +1,31 @@
 #include "Arduino.h"
 #include "powertester.h"
 
-// #include <iostream>
-// std::cout << "---> Rm: (" << Rm << ") GRM: [" << _ReadMask << "] LRM: [" << LocalReadMask << "]" << std::endl;
-
 #define UPDATE_TFT
 
 static void _PrSet(int Value, PrintRead *Pr);
+static void _tft_push(tft_message *Message);
+extern xQueueHandle MsgQueue;
 
 // --------------------------------
 // READING - Public
 // --------------------------------
-reading::reading(const char *Label, const char *Unit, int Y, const unsigned short *Icon) : _IR_min(R_DEF_MIN),
-                                                                                           _IR_pile(R_DEF_PILE),
-                                                                                           _IR_max(R_DEF_MAX),
-                                                                                           _IR_reads(R_DEF_READS),
-                                                                                           _focus(false),
-                                                                                           _hold(NO_HOLD_MODE),
-                                                                                           _y(Y),
-                                                                                           _tft_MU_icon(Icon)
+reading::reading(const char *label,
+                 uint8_t icon,
+                 uint8_t unit,
+                 uint16_t tft_area,
+                 uint8_t testerId) : _Icon(icon),
+                                     _Unit(unit),
+                                     _DisplayID(testerId),
+                                     _IR_min(R_DEF_MIN),
+                                     _IR_pile(R_DEF_PILE),
+                                     _IR_max(R_DEF_MAX),
+                                     _IR_reads(R_DEF_READS),
+                                     _focus(false),
+                                     _hold(NO_HOLD_MODE),
+                                     _tft_area(tft_area)
 {
-    strncpy(_Unit, Unit, 8);
-    strncpy(_Label, Label, 4);
+    strncpy(_Label, label, 4);
 }
 
 void reading::reset()
@@ -56,21 +60,40 @@ void reading::set(float ReadData)
     //}
 }
 
-void reading::display(Stream *S, int Xoff, int BgColor)
+void reading::display(Stream *S, int BgColor)
 {
     bool tftUpdate = false;
+    tft_message Msg;
+
+    char MU;
+
+    switch (_Unit)
+    {
+    case TFT_ICON_MU_VL:
+        MU = 'V';
+        break;
+    case TFT_ICON_MU_AM:
+        MU = 'A';
+        break;
+    case TFT_ICON_MU_WT:
+        MU = 'W';
+        break;
+    default:
+        MU = '?';
+        break;
+    }
 
 #ifdef UPDATE_TFT
-    if (_y >= 0)
+    if (_tft_area)
     {
         tftUpdate = true;
+        Msg.Sender = _DisplayID;
+        Msg.BgColor = BgColor;
     }
 #endif
 
     PrintRead PrMean;
     _PrSet(_get_mean(), &PrMean);
-
-    _spr->fillSprite(BgColor);
 
     if (_focus) // Focused HiSpeed reading
     {
@@ -87,48 +110,50 @@ void reading::display(Stream *S, int Xoff, int BgColor)
             // Print MaxValue
             if (_hold)
             {
-                _spr->fillSprite(BgColor);
-                _spr->setTextColor((PrMax.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
-                _spr->drawString(String(PrMax.Int) + "." + String(PrMax.Fract), TFT_ATZERO);
-                _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y - TFT_FL_DISPL);
+                Msg.FgColor = (PrMax.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR;
+                Msg.Area = TFT_A_LT_DATA;
+                sprintf(Msg.Message, "%s.%s", PrMax.Int, PrMax.Fract);
+                _tft_push(&Msg);
             }
 
-            // Print MaxValue
-            _spr->fillSprite(BgColor);
-            _spr->setTextColor((PrMean.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
-            _spr->drawString(String(PrMean.Int) + "." + String(PrMean.Fract), TFT_ATZERO);
-            _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y);
-
-            int FullData = (atoi(PrMean.Int) * READ_COEFF) + atoi(PrMean.Fract);
-            int Xpart = (FullData * TFT_SPR_BAR_WIDTH) / 1000;
-
-            _bar->drawString("0", 4, 0);
-            _bar->fillRect(20, 0, Xpart + 20, 28, TFT_RED);
-            _bar->fillRect(Xpart + 20, 0, TFT_SPR_BAR_WIDTH - Xpart, 28, TFT_GREEN);
-            _bar->drawString("1", 228, 0);
-            _bar->pushSprite(Xoff, 286);
+            // Print MeanValue
+            Msg.FgColor = (PrMean.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR;
+            Msg.Area = TFT_A_LF_DATA;
+            sprintf(Msg.Message, "%s.%s", PrMean.Int, PrMean.Fract);
+            _tft_push(&Msg);
 
             // Print MinValue
             if (_hold)
             {
-                _spr->fillSprite(BgColor);
-                _spr->setTextColor((PrMin.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
-                _spr->drawString(String(PrMin.Int) + "." + String(PrMin.Fract), TFT_ATZERO);
-                _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y + TFT_FL_DISPL);
+                Msg.FgColor = (PrMin.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR;
+                Msg.Area = TFT_A_LB_DATA;
+                sprintf(Msg.Message, "%s.%s", PrMin.Int, PrMin.Fract);
+                _tft_push(&Msg);
             }
+
+            // Area Bar defining values
+            int FullData = (atoi(PrMean.Int) * READ_COEFF) + atoi(PrMean.Fract);
+            int Xpart = (FullData * TFT_SPR_BAR_WIDTH) / 1000;
+
+            // Area Bar printing values
+            Msg.Area = TFT_A_DATABAR;
+            Msg.BgColor = 0; // Remark: Field used in a nonstandard way ...
+            Msg.FgColor = 1; // Remark: Field used in a nonstandard way ...
+            sprintf(Msg.Message, "%d", Xpart);
+            _tft_push(&Msg);
         }
 
         // Serial results printing
         if (_SerialPrints == D_HUMAN)
         {
-            S->printf("<%s: (" N_CYA "%03d" RESET ")  %s  %s%s.%s" RESET "    %s%s.%s" RESET "    %s%s.%s" B_YEL "    %s" RESET ">  ",
+            S->printf("<%s: (" N_CYA "%03d" RESET ")  %s  %s%s.%s" RESET "    %s%s.%s" RESET "    %s%s.%s" B_YEL "    %c" RESET ">  ",
                       _Label,
                       _get_reads(),
                       (_hold) ? N_BLU "HOLD" RESET : "    ",
                       (PrMin.Sign == '-') ? B_RED : B_GRE, PrMin.Int, PrMin.Fract,
                       (PrMean.Sign == '-') ? B_RED : B_GRE, PrMean.Int, PrMean.Fract,
                       (PrMax.Sign == '-') ? B_RED : B_GRE, PrMax.Int, PrMax.Fract,
-                      _Unit);
+                      MU);
         }
         else if (_SerialPrints == D_MACHINE)
         {
@@ -148,19 +173,20 @@ void reading::display(Stream *S, int Xoff, int BgColor)
         // Tft Update
         if (tftUpdate)
         {
-            _spr->fillSprite(BgColor);
-            _spr->setTextColor((PrMean.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR, BgColor);
-            _spr->drawString(String(PrMean.Int) + "." + String(PrMean.Fract), TFT_ATZERO);
-            _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y);
+            // Print MeanValue
+            Msg.FgColor = (PrMean.Sign == '+') ? TFT_POS_COLOR : TFT_NEG_COLOR;
+            Msg.Area = _tft_area;
+            sprintf(Msg.Message, "%s.%s", PrMean.Int, PrMean.Fract);
+            _tft_push(&Msg);
         }
 
         // Serial results printing
         if (_SerialPrints == D_HUMAN)
         {
-            S->printf("<%s: %s%s.%s" B_YEL " %s" RESET ">  ",
+            S->printf("<%s: %s%s.%s" B_YEL " %c" RESET ">  ",
                       _Label,
                       (PrMean.Sign == '-') ? B_RED : B_GRE, PrMean.Int, PrMean.Fract,
-                      _Unit);
+                      MU);
         }
         else if (_SerialPrints == D_MACHINE)
         {
@@ -172,6 +198,7 @@ void reading::display(Stream *S, int Xoff, int BgColor)
 bool reading::setFocus(bool Focus = true)
 {
     _focus = Focus;
+
     return (_focus);
 }
 
@@ -182,21 +209,31 @@ void reading::setSerialPrints(uint8_t SerialMode)
     _SerialPrints = SerialMode;
 }
 
-bool reading::setHoldingMode(bool HoldingMode, uint32_t BgColor, int Xoff)
+bool reading::setHoldingMode(bool HoldingMode, uint32_t BgColor)
 {
     _hold = HoldingMode;
 
-    _spr->fillSprite(BgColor);
-    _spr->setTextColor(TFT_BLACK, BgColor);
-    _spr->drawString("", TFT_ATZERO);
     if (_focus)
     {
-        _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y - TFT_FL_DISPL);
-        _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y + TFT_FL_DISPL);
-    }
-    else
-    {
-        _spr->pushSprite(Xoff + TFT_SPR_ADD_OFF, _y);
+        if (HoldingMode)
+        {
+            ShowIconsHold(BgColor); // Show holding mode Icons
+        }
+        else
+        {
+            tft_message Msg;
+            Msg.Sender = _DisplayID;
+            Msg.BgColor = BgColor;
+
+            Msg.Message[0] = 0;
+
+            Msg.Area = TFT_A_LT_DATA; // Remove Maximum Data
+            _tft_push(&Msg);
+            Msg.Area = TFT_A_LB_DATA; // Remove Minimum Data
+            _tft_push(&Msg);
+
+            RemoveIconsHold(BgColor); // Remove holding mode Icons
+        }
     }
 
     return (_hold);
@@ -204,17 +241,79 @@ bool reading::setHoldingMode(bool HoldingMode, uint32_t BgColor, int Xoff)
 
 bool reading::getHoldingMode() { return (_hold); }
 
-char *reading::getMeasurementUnit() { return (_Unit); }
-
-uint16_t reading::gety() { return (_y); }
-
-void reading::setTFT(TFT_eSPI *tft, TFT_eSprite *spr, TFT_eSprite *bar)
+void reading::ShowIcons(uint32_t BgColor)
 {
-    _tft = tft;
-    _tft_width = tft->width();
-    _tft_height = tft->width();
-    _spr = spr;
-    _bar = bar;
+    if (!_tft_area)
+        return;
+
+    tft_message Msg;
+    Msg.BgColor = 0XAA; // Unuseful Value (Debug Only)
+    Msg.FgColor = 0XBB; // Unuseful Value (Debug Only)
+    Msg.Sender = _DisplayID;
+
+    Msg.Area = _tft_area + 1;
+    Msg.Message[0] = _Icon;
+    _tft_push(&Msg);
+
+    Msg.Area = _tft_area + 2;
+    Msg.Message[0] = _Unit;
+    _tft_push(&Msg);
+
+    if (_focus)
+    {
+        if (_hold)
+        {
+            ShowIconsHold(BgColor);
+        }
+    }
+}
+
+void reading::ShowIconsHold(uint32_t BgColor)
+{
+    tft_message Msg;
+    Msg.BgColor = 0XCC; // Unuseful Value (Debug Only)
+    Msg.FgColor = 0XDD; // Unuseful Value (Debug Only)
+    Msg.Sender = _DisplayID;
+
+    Msg.Area = TFT_A_LT_ICON;
+    Msg.Message[0] = TFT_ICON_RE_MA;
+    _tft_push(&Msg);
+
+    Msg.Area = TFT_A_LT_UNIT;
+    Msg.Message[0] = _Unit;
+    _tft_push(&Msg);
+
+    Msg.Area = TFT_A_LB_ICON;
+    Msg.Message[0] = TFT_ICON_RE_MI;
+    _tft_push(&Msg);
+
+    Msg.Area = TFT_A_LB_UNIT;
+    Msg.Message[0] = _Unit;
+    _tft_push(&Msg);
+}
+
+void reading::RemoveIconsHold(uint32_t BgColor)
+{
+    tft_message Msg;
+    Msg.BgColor = BgColor; // Unuseful Value (Debug Only)
+    Msg.FgColor = 0XDD;    // Unuseful Value (Debug Only)
+    Msg.Sender = _DisplayID;
+
+    Msg.Area = TFT_A_LT_ICON;
+    Msg.Message[0] = TFT_ICON_RE_NL;
+    _tft_push(&Msg);
+
+    Msg.Area = TFT_A_LT_UNIT;
+    Msg.Message[0] = TFT_ICON_MU_NL;
+    _tft_push(&Msg);
+
+    Msg.Area = TFT_A_LB_ICON;
+    Msg.Message[0] = TFT_ICON_RE_NL;
+    _tft_push(&Msg);
+
+    Msg.Area = TFT_A_LB_UNIT;
+    Msg.Message[0] = TFT_ICON_MU_NL;
+    _tft_push(&Msg);
 }
 
 // --------------------------------
@@ -246,18 +345,20 @@ int reading::_get_mean()
 // POWERTESTER - Public
 // --------------------------------
 
-powertester::powertester(uint8_t i2c_address, const char *Id, int Xoff, uint8_t OutPin) : Adafruit_INA219(i2c_address),
-                                                                                          _Address(i2c_address),
-                                                                                          _Active(false),
-                                                                                          _Xoffset(Xoff),
-                                                                                          _Output(false),
-                                                                                          _HoldingMode(false),
-                                                                                          _OutPin(OutPin),
-                                                                                          _Readings({reading("BU", "V", TFT_Y1, IconV),
-                                                                                                     reading("SH", "mV", TFT_YN, IconV),
-                                                                                                     reading("LD", "V", TFT_Y2, IconV),
-                                                                                                     reading("CU", "A", TFT_FC, IconA),
-                                                                                                     reading("PW", "W", TFT_Y3, IconW)})
+powertester::powertester(uint8_t i2c_address,
+                         const char *Id,
+                         uint8_t OutPin) : Adafruit_INA219(i2c_address),
+                                           _DisplayID(i2c_address - INA219_I2C_OFFSET),
+                                           _Address(i2c_address),
+                                           _Active(false),
+                                           _Output(false),
+                                           _HoldingMode(false),
+                                           _OutPin(OutPin),
+                                           _Readings({reading("BU", TFT_ICON_RE_BU, TFT_ICON_MU_VL, TFT_A_L1_DATA, i2c_address - INA219_I2C_OFFSET),
+                                                      reading("SH", TFT_ICON_RE_NL, TFT_ICON_MU_VL, TFT_A_UNDEFIN, i2c_address - INA219_I2C_OFFSET),
+                                                      reading("LD", TFT_ICON_RE_LD, TFT_ICON_MU_VL, TFT_A_L2_DATA, i2c_address - INA219_I2C_OFFSET),
+                                                      reading("CU", TFT_ICON_RE_CU, TFT_ICON_MU_AM, TFT_A_LF_DATA, i2c_address - INA219_I2C_OFFSET),
+                                                      reading("PW", TFT_ICON_RE_PW, TFT_ICON_MU_WT, TFT_A_L3_DATA, i2c_address - INA219_I2C_OFFSET)})
 {
     // Initialize Read Mode
     _ReadMask.reset();
@@ -274,57 +375,22 @@ bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap 
     // Initalizing INA219 chip
     if (!begin())
     {
-        Serial.printf("* INA219 : Addr: 0x%X ......... [" N_RED "!!! Init failed !!!" RESET "]\n", _Address);
+        if (SerialMode >= D_MESSAGES)
+            Serial.printf(B_BLU "* INA219" RESET ": Addr: 0x%X ......... [" N_RED "!!! Init failed !!!" RESET "]\n", _Address);
         _Active = false;
     }
     else
     {
         _Active = true;
 
-        if (SerialMode)
-            Serial.printf("* INA219 : Addr: 0x%X ......... [" N_GRE "Initialized" RESET "]\n", _Address);
+        if (SerialMode >= D_MESSAGES)
+            Serial.printf(B_BLU "* INA219" RESET ": Addr: 0x%X ......... [" N_GRE "Initialized" RESET "]\n", _Address);
 
         // Calibrating INA219 chip
         setCalibration_16V_400mA(); // 16V, 400mA range (higher precision on volts and amps):
-        if (SerialMode)
-            Serial.printf("* INA219 : Addr: 0x%X ......... [" N_GRE "Set: : 16V, 400mA range" RESET "]\n", _Address);
+        if (SerialMode >= D_MESSAGES)
+            Serial.printf(B_BLU "* INA219" RESET ": Addr: 0x%X ......... [" N_GRE "Set: : 16V, 400mA range" RESET "]\n", _Address);
     }
-
-    _tft = tft;
-
-    _spr_small = new TFT_eSprite(_tft);
-    _spr_small->createSprite(TFT_SPR_SML_W, TFT_SPR_SML_H);
-    _spr_small->setColorDepth(16);
-    _spr_small->loadFont(TFT_SPR_SML_F);
-    _spr_small->setTextDatum(TL_DATUM);
-
-    _spr_big = new TFT_eSprite(_tft);
-    _spr_big->createSprite(TFT_SPR_BIG_W, TFT_SPR_BIG_H);
-    _spr_big->setColorDepth(16);
-    _spr_big->loadFont(TFT_SPR_BIG_F);
-    _spr_big->setTextDatum(TL_DATUM);
-
-    _spr_leftbutton = new TFT_eSprite(_tft);
-    _spr_leftbutton->setColorDepth(16);
-    _spr_leftbutton->createSprite(116, 45);
-    _spr_leftbutton->loadFont(TFT_SPR_SML_F);
-    _spr_leftbutton->setTextDatum(TL_DATUM);
-    _spr_leftbutton->fillSprite(TFT_BLACK);
-
-    _spr_rightbutton = new TFT_eSprite(_tft);
-    _spr_rightbutton->setColorDepth(16);
-    _spr_rightbutton->createSprite(116, 45);
-    _spr_rightbutton->loadFont(TFT_SPR_SML_F);
-    _spr_rightbutton->setTextDatum(TL_DATUM);
-    _spr_rightbutton->fillSprite(TFT_BLACK);
-
-    _spr_databar = new TFT_eSprite(_tft);
-    _spr_databar->setColorDepth(16);
-    _spr_databar->createSprite(233, 30);
-    _spr_databar->loadFont(TFT_SPR_SML_F);
-    _spr_databar->setTextDatum(TR_DATUM);
-    _spr_databar->fillSprite(TFT_BLACK);
-    _spr_databar->setTextColor(TFT_WHITE, TFT_BLACK);
 
     _SerialPrints = SerialMode;
 
@@ -334,7 +400,6 @@ bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap 
     for (auto Curr_Reading = _Readings.begin(); Curr_Reading != _Readings.end(); ++Curr_Reading)
     {
         Curr_Reading->setSerialPrints(_SerialPrints);
-        Curr_Reading->setTFT(_tft, (_ReadMask[i]) ? _spr_big : _spr_small, _spr_databar);
         Curr_Reading->setFocus(_ReadMask[i++]);
     }
 
@@ -393,35 +458,31 @@ void powertester::display(Stream *S)
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        it->display(S, _Xoffset, (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
+        it->display(S, (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
         it->reset();
     }
-    S->println("");
+    if (_SerialPrints >= D_MACHINE)
+    {
+        S->println("");
+    }
 }
 
 bool powertester::setHoldingMode(bool HoldingMode)
 {
-    _HoldingMode = HoldingMode;
-    uint32_t RingColor = (_Output) ? TFT_DARKGREEN : TFT_MAROON;
-    _spr_rightbutton->fillRoundRect(0, 0, 116, 45, 8, RingColor);
+    tft_message Message;
 
-    if (HoldingMode)
-    {
-        _spr_rightbutton->setTextColor(TFT_BLACK, TFT_GREEN);
-        _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_GREEN);
-        _spr_rightbutton->drawString("Hold", 10, 7);
-    }
-    else
-    {
-        _spr_rightbutton->setTextColor(TFT_BLACK, TFT_RED);
-        _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_RED);
-        _spr_rightbutton->drawString("Hold", 10, 7);
-    }
-    _spr_rightbutton->pushSprite(_Xoffset + 117, 4);
+    _HoldingMode = HoldingMode;
+
+    Message.Sender = _DisplayID;
+    Message.Area = TFT_A_R_BUTTN;
+    Message.BgColor = 0;
+    Message.FgColor = 0;
+    Message.Message[0] = (HoldingMode) ? 1 : 0;
+    _tft_push(&Message);
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        it->setHoldingMode(HoldingMode, (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR, _Xoffset);
+        it->setHoldingMode(HoldingMode, (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
     }
 
     return (HoldingMode);
@@ -429,43 +490,34 @@ bool powertester::setHoldingMode(bool HoldingMode)
 
 bool powertester::setOutputMode(bool OutputMode)
 {
+    tft_message Message;
+
     _Output = OutputMode;
 
-    uint32_t BgColor = (_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR;
-    uint32_t RingColor = (_Output) ? TFT_DARKGREEN : TFT_MAROON;
+    // Message preparation
+    Message.Sender = _DisplayID;
+    Message.BgColor = 0;
+    Message.FgColor = 0;
+    Message.Message[0] = (OutputMode) ? 1 : 0;
 
-    _tft->fillRect(_Xoffset, 50, 233, 235, BgColor);
-    _spr_leftbutton->fillRoundRect(0, 0, 116, 45, 8, RingColor);
+    // Button Change
+    Message.Area = TFT_A_L_BUTTN;
+    _tft_push(&Message);
 
+    // Relay Management
     if (OutputMode)
-    {
-        _spr_leftbutton->setTextColor(TFT_BLACK, TFT_GREEN);
-        _spr_leftbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_GREEN);
-        _spr_leftbutton->drawString("On", 10, 7);
         RELAY_THROW(_OutPin);
-    }
     else
-    {
-        _spr_leftbutton->setTextColor(TFT_BLACK, TFT_RED);
-        _spr_leftbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_RED);
-        _spr_leftbutton->drawString("Off", 10, 7);
         RELAY_RELEASE(_OutPin);
+
+    // Background change
+    Message.Area = TFT_A_BACKGRD;
+    _tft_push(&Message);
+
+    for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
+    {
+        it->ShowIcons((_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
     }
-    _spr_leftbutton->pushSprite(_Xoffset, 4);
-
-    _tft->pushImage(_Xoffset + 2, TFT_Y1, IconBus_width, IconBus_height, IconBus, 0);
-    _tft->pushImage(_Xoffset + 2, TFT_Y2, IconLoad_width, IconLoad_height, IconLoad, 0);
-    _tft->pushImage(_Xoffset + 2, TFT_Y3, IconPower_width, IconPower_height, IconPower, 0);
-    _tft->pushImage(_Xoffset + 2, TFT_FC - TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG, IconCurrent_Max_width, IconCurrent_Max_height, IconCurrent_Max, 0);
-    _tft->pushImage(_Xoffset + 2, TFT_FC + TFT_SPR_MEA_X_DISP_BIG, IconCurrent_width, IconCurrent_height, IconCurrent, 0);
-    _tft->pushImage(_Xoffset + 2, TFT_FC + TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG, IconCurrent_Min_width, IconCurrent_Min_height, IconCurrent_Min, 0);
-
-    _tft->pushImage(_Xoffset + TFT_SPR_MEA_X_DISP, TFT_Y1, 0x18, 0x18, IconV, 0);
-    _tft->pushImage(_Xoffset + TFT_SPR_MEA_X_DISP, TFT_Y2, 0x18, 0x18, IconV, 0);
-    _tft->pushImage(_Xoffset + TFT_SPR_MEA_X_DISP, TFT_Y3, 0x18, 0x18, IconW, 0);
-    _tft->pushImage(_Xoffset + TFT_SPR_MEA_X_DISP, TFT_FC - TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG, 0x18, 0x18, IconA, 0);
-    _tft->pushImage(_Xoffset + TFT_SPR_MEA_X_DISP, TFT_FC + TFT_SPR_MEA_X_DISP_BIG, 0x18, 0x18, IconA, 0);
-    _tft->pushImage(_Xoffset + TFT_SPR_MEA_X_DISP, TFT_FC + TFT_FL_DISPL + TFT_SPR_MEA_X_DISP_BIG, 0x18, 0x18, IconA, 0);
 
     return (_Output);
 }
@@ -502,4 +554,21 @@ static void _PrSet(int Value, PrintRead *Pr)
 
     snprintf(Pr->Int, INT_SIZE, "%02d", Ip);
     snprintf(Pr->Fract, FRACT_SIZE, "%03d", Fp);
+}
+
+/**
+ * @brief Enqueue a message 
+ * 
+ * @param[in] data Data to be used foe update
+ */
+static void _tft_push(tft_message *Message)
+{
+    BaseType_t xStatus;                                 // keep the status of sending data
+    const TickType_t xTicksToWait = pdMS_TO_TICKS(100); //time to block the task until the queue has free space
+
+    xStatus = xQueueSendToBack(MsgQueue, Message, xTicksToWait);
+    if (xStatus != pdPASS)
+    {
+        Serial.println("[Error] ... Producer Sending Data");
+    }
 }

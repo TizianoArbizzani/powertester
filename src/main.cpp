@@ -1,37 +1,35 @@
 #include <Arduino.h>
 
+#include <defines.h>
+#include <macros.h>
+
 #include <FS.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
 #include <powertester.h>
-
-#include <defines.h>
-#include <macros.h>
-
-// Global objects
-TFT_eSPI tft = TFT_eSPI();                                                     //!<TFT Display
-powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OFFSET, LEFT_OUTPIN);      //!<Left INA219 Chip (Left PSU)
-powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OFFSET, RIGHT_OUTPIN); //!<Right INA219 Chip (Right PSU)
-TFT_eSprite spr = TFT_eSprite(&tft);                                           // Sprite class needs to be invoked
+#include <tftmanager.h>
 
 // Global variables - Timings
-unsigned long NextPrint; //!<Time to go for next TFT Update
+unsigned long NextPrint; //!<Time to go for next TFT TaskHandle_t ConsumerTask;Update
 unsigned long NextTouch; //!<Time to go for next Touch Reading
 
 // Global variables - Generic
-uint8_t PrintMode = D_REDUCED; //!<Serial printing verbose mode
-bool CurHoldingMode = false;
+uint8_t PrintMode = D_MESSAGES;                  //!<Serial printing verbose mode
+uint16_t Tx;                                     //!< Detected Touch X value
+uint16_t Ty;                                     //!< Detected Touch X value
+volatile boolean Td;                             //!< Detected Touch pressure
+xQueueHandle MsgQueue;                           //!< InterProcess Message Queue
+portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED; //!< Mux Management variable
+
+// Global objects
+TFT_eSPI tft = TFT_eSPI();                                       //!<TFT Display
+powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OUTPIN);     //!<Left INA219 Chip (Left PSU)
+powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OUTPIN); //!<Right INA219 Chip (Right PSU)
 
 // Function prototypes
-void DrawMask();
 void TouchManager();
 void IRAM_ATTR TouchDetected();
-
-uint16_t Tx;         //!< Detected Touch X value
-uint16_t Ty;         //!< Detected Touch X value
-volatile boolean Td; //!< Detected Touch pressure
-
-portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED; //!< Mux Management variable
+//void tft_consumer(void *parameter);
 
 // Mandatory functions
 
@@ -61,10 +59,10 @@ void setup(void)
 
   Serial.begin(SERIALSPEED);
 
-  if (PrintMode >= D_REDUCED)
+  if (PrintMode >= D_MESSAGES)
   {
-    Serial.printf("* SYS    : Initialized serial ... [Start: " B_GRE "%u " RESET "Bps]\r\n", SERIALSPEED);
-    Serial.printf("* SYS    : Revision 001 ....... [" N_GRE "%s" RESET "]\r\n", PIO_SRC_REV);
+    Serial.printf(MAN_COLOR "* SYS   " RESET ": Serial port .......... [Start: " B_GRE "%u " RESET "Bps]\r\n", SERIALSPEED);
+    Serial.printf(MAN_COLOR "* FW    " RESET ": Revision 001 ....... [" N_GRE "%s" RESET "]\r\n", PIO_SRC_REV);
   }
 
   if (!SPIFFS.begin())
@@ -77,8 +75,8 @@ void setup(void)
     }
   }
 
-  if (PrintMode >= D_REDUCED)
-    Serial.printf("* SPIFFS : Initialization ..... [" B_GRE "Done" RESET "]\r\n");
+  if (PrintMode >= D_MESSAGES)
+    Serial.printf(MAN_COLOR "* SPIFFS" RESET ": Initialization ..... [" B_GRE "Done" RESET "]\r\n");
 
   tft.init();
   tft.setRotation(3);
@@ -88,11 +86,13 @@ void setup(void)
 
   TFT_LED_ON;
 
-  if (PrintMode >= D_REDUCED)
-    Serial.printf("* TFT    : Initialization ..... [" B_GRE "Done" RESET "]\r\n");
+  if (PrintMode >= D_MESSAGES)
+    Serial.printf(MAN_COLOR "* SPIFFS" RESET ": Initialization ..... [" B_GRE "Done" RESET "]\r\n");
 
   if (tft.getTouch(&x, &y))
   {
+    TFT_eSprite spr = TFT_eSprite(&tft);
+
     spr.setColorDepth(16);
     spr.createSprite(220, 48);
     spr.loadFont(FruBoldNarrow54);
@@ -117,8 +117,8 @@ void setup(void)
       {
         calDataOK = 1;
 
-        if (PrintMode >= D_REDUCED)
-          Serial.printf("* Touch  : Calibration ........ [" B_GRE "%u:%u:%u:%u:%u" RESET "]\r\n",
+        if (PrintMode >= D_MESSAGES)
+          Serial.printf(MAN_COLOR "* SPIFFS" RESET ": Calibration ........ [" B_GRE "%u:%u:%u:%u:%u" RESET "]\r\n",
                         calibrationData[0], calibrationData[1], calibrationData[2], calibrationData[3], calibrationData[4]);
       }
 
@@ -129,17 +129,17 @@ void setup(void)
   {
     tft.setTouch(calibrationData);
 
-    if (PrintMode >= D_REDUCED)
-      Serial.printf("* Touch  : Calibration ........ [" B_GRE "Done" RESET "]\r\n");
+    if (PrintMode >= D_MESSAGES)
+      Serial.printf(MAN_COLOR "* SPIFFS" RESET ": Calibration ........ [" B_GRE "Done" RESET "]\r\n");
   }
   else
   {
-    if (PrintMode >= D_REDUCED)
-      Serial.printf("* Touch  : Calibration ........ [" B_YEL "Procedure Start" RESET "]\r\n");
+    if (PrintMode >= D_MESSAGES)
+      Serial.printf("* Touch  : Calibration ........ [" N_YEL "Procedure Start" RESET "]\r\n");
 
     tft.calibrateTouch(calibrationData, TFT_WHITE, TFT_RED, 15);
 
-    if (PrintMode >= D_REDUCED)
+    if (PrintMode >= D_MESSAGES)
       Serial.printf("* Touch  : Calibration ........ [" B_GRE "Done" RESET "]\r\n");
 
     tft.fillScreen(TFT_BLACK);
@@ -153,38 +153,38 @@ void setup(void)
     }
   }
 
-  if (PrintMode >= D_REDUCED)
-    Serial.printf("* Touch  : Initialization ..... [" B_GRE "Done" RESET "]\r\n");
+  tft_manager_init(PrintMode);
+
+  if (PrintMode >= D_MESSAGES)
+    Serial.printf(MAN_COLOR "* TFT   " RESET ": Initialization ..... [" B_GRE "Done" RESET "]\r\n");
 
   PT_Left.setup(&tft, PrintMode, RS(IR_CURR));
   PT_Right.setup(&tft, PrintMode, RS(IR_CURR));
 
-  if (PrintMode >= D_REDUCED)
-    Serial.printf("* INA219 : Focus on reading ... [" B_GRE "Current" RESET "]\r\n");
-
-  DrawMask();
+  if (PrintMode >= D_MESSAGES)
+    Serial.printf(MAN_COLOR "* TESTER" RESET ": Focus on reading ... [" B_GRE "Current" RESET "]\r\n");
 
   PT_Left.setOutputMode(OUTPUT_CUTOFF);
   PT_Right.setOutputMode(OUTPUT_CUTOFF);
 
-  if (PrintMode >= D_REDUCED)
-    Serial.printf("* SUPPLY : Output at Start .... [" B_YEL "Cut Off" RESET "]\r\n");
+  if (PrintMode >= D_MESSAGES)
+    Serial.printf(MAN_COLOR "* TESTER" RESET ": Output at Start .... [" B_YEL "Cut Off" RESET "]\r\n");
 
   PT_Left.setHoldingMode(false);
   PT_Right.setHoldingMode(false);
 
-  if (PrintMode >= D_REDUCED)
-    Serial.printf("* SUPPLY : Hold at Start ...... [" B_YEL "Off" RESET "]\r\n");
+  if (PrintMode >= D_MESSAGES)
+    Serial.printf(MAN_COLOR "* TESTER" RESET ": Hold at Start ...... [" B_YEL "Off" RESET "]\r\n");
 
   NextPrint = millis() + TFT_UPDATES_MS;
   NextTouch = millis();
 
   attachInterrupt(TFT_INTPIN, TouchDetected, FALLING);
 
-  if (PrintMode >= D_REDUCED)
+  if (PrintMode >= D_MESSAGES)
   {
-    Serial.printf("* INA219 : Measurements ....... [" B_GRE "Start" RESET "]\r\n");
-    Serial.printf("* HEAP   : Start .............. [" B_GRE "%u of %u" RESET "]\r\n", ESP.getFreeHeap(), ESP.getHeapSize());
+    Serial.printf(MAN_COLOR "* TESTER" RESET ": Measurements ....... [" B_GRE "Start" RESET "]\r\n");
+    Serial.printf(MAN_COLOR "* ESP32 " RESET ": Start .............. [" B_GRE "%u of %u" RESET "]\r\n", ESP.getFreeHeap(), ESP.getHeapSize());
   }
 }
 
@@ -210,13 +210,16 @@ void loop(void)
         Tx = X;
         Ty = Y;
 
-        Serial.printf("* TOUCH  : Correct ... [X:%u Y:%u]\r\n", Tx, Ty);
+        if (PrintMode >= D_MESSAGES)
+          Serial.printf(TCH_COLOR "* TOUCH " RESET ": Correct ............ [" B_GRE "X:%u Y:%u" RESET "]\r\n", Tx, Ty);
+
         TouchManager();
       }
-      //else
-      //{
-      //  Serial.printf("* TOUCH  : Repeated ... [X:%u Y:%u]\r\n", Tx, Ty);
-      //}
+      else
+      {
+        if (PrintMode >= D_MESSAGES)
+          Serial.printf(TCH_COLOR "* TOUCH " RESET ": Repeated ........... [" B_GRE "X:%u Y:%u" RESET "]\r\n", Tx, Ty);
+      }
     }
 
     portENTER_CRITICAL(&mux);
@@ -254,15 +257,11 @@ void loop(void)
   //-----------------------------------------------
 }
 
-void DrawMask()
-{
-  tft.fillRect(0, 0, tft.width(), 4, FRAME_COLOR);                // Top
-  tft.fillRect(0, tft.height() - 4, tft.width(), 4, FRAME_COLOR); // Bottom
-  tft.fillRect(0, 0, 4, tft.width(), FRAME_COLOR);                // Left
-  tft.fillRect(tft.width() - 4, 0, 4, tft.height(), FRAME_COLOR); // Right
-  tft.fillRect(234 + 4, 0, 4, tft.height(), FRAME_COLOR);         // Center
-}
-
+/**
+ * @brief Consumes task queue 
+ * 
+ * @param[in] sender Tester Identification code
+ */
 void IRAM_ATTR TouchDetected()
 {
   portENTER_CRITICAL_ISR(&mux);
@@ -270,6 +269,11 @@ void IRAM_ATTR TouchDetected()
   portEXIT_CRITICAL_ISR(&mux);
 }
 
+/**
+ * @brief Consumes task queue 
+ * 
+ * @param[in] sender Tester Identification code
+ */
 void TouchManager()
 {
   if (Ty < 50)
@@ -277,19 +281,23 @@ void TouchManager()
     switch (Tx / 120)
     {
     case 0:
+      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Output LEFT .... [" B_GRE "%d" RESET "]\r\n", (!PT_Left.getOutputMode()));
       PT_Left.setOutputMode(!PT_Left.getOutputMode());
       break;
     case 1:
+      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Holding LEFT ... [" B_GRE "%d" RESET "]\r\n", (!PT_Left.getHoldingMode()));
       PT_Left.setHoldingMode(!PT_Left.getHoldingMode());
       break;
     case 2:
+      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Output RIGHT ... [" B_GRE "%d" RESET "]\r\n", (!PT_Right.getOutputMode()));
       PT_Right.setOutputMode(!PT_Right.getOutputMode());
       break;
     case 3:
+      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Holding RIGHT .. [" B_GRE "%d" RESET "]\r\n", (!PT_Right.getHoldingMode()));
       PT_Right.setHoldingMode(!PT_Right.getHoldingMode());
       break;
     default:
-      Serial.printf("* TOUCH  : Button .... [UNKNOWN]\r\n");
+      Serial.printf(N_RED "* TOUCH " RESET ": Button ............. [" N_RED "Unknown" RESET "]\r\n");
       break;
     }
   }

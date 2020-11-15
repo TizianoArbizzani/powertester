@@ -4,7 +4,7 @@
 .vscode/launch.json
 .vscode/ipch
 
-lib/powertester/docs/html
+lib/powertester/docs/html/*
 data
 fonts
 

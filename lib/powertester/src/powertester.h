@@ -5,36 +5,10 @@
 #include <Adafruit_INA219.h>
 #include <TFT_eSPI.h>
 
+#include <tftmanager.h>
+
 #include <array>
 #include <bitset>
-
-/** @name Icons
- *  Icons used
- *  
- */
-///@{
-#include "icons/top/Hold.h"
-#include "icons/top/NoHold.h"
-#include "icons/top/CutOff.h"
-#include "icons/top/Relay.h"
-#include "icons/readings/Bus.h"
-#include "icons/readings/Load.h"
-#include "icons/readings/Power.h"
-#include "icons/readings/Current_Min.h"
-#include "icons/readings/Current.h"
-#include "icons/readings/Current_Max.h"
-#include "icons/units/A.h"
-#include "icons/units/V.h"
-#include "icons/units/W.h"
-///@}
-
-/** @name Fonts
- *  Fonts in use
- *  
- */
-///@{
-#include "fonts/frutiger.h"
-///@}
 
 /** @name Colors
  *  ANSI colors for terminals
@@ -58,6 +32,16 @@
 #define B_CYA "\033[1;96m" //!<Bright Cyan
 #define B_WHI "\033[1;97m" //!<Bright White
 #define RESET "\033[0m"    //!<Reset to standard values
+///@}
+
+/** @name Terminal Debug Colors
+ *  Colors used for debugging lines differentiation
+ *  
+ */
+///@{
+#define MAN_COLOR B_GRE
+#define TFT_COLOR B_YEL
+#define TCH_COLOR B_MAG
 ///@}
 
 /** @name Substruct Size
@@ -94,45 +78,6 @@ typedef struct
 #define RELAY_RELEASE(P) digitalWrite((P), HIGH) //!<Relay Release
 ///@}
 
-/** @name TFT Settings
- *  Settings Related to TFT Panel
- *  
- */
-///@{
-
-#define TFT_ON_COLOR 0x37E6  //!< (RGB565) Active Output window background
-#define TFT_OFF_COLOR 0xFD70 //!< (RGB565) CutOff Output window background
-
-#define TFT_POS_COLOR TFT_BLACK //!< Positive (or zero) reading background color
-#define TFT_NEG_COLOR TFT_RED   //!< Negative reading background color
-
-#define TFT_SPR_ADD_OFF 38 //!< Reading first character indentation from frame
-
-#define TFT_SPR_SML_F FruBoldNarrow34 //!< Small (unfocused) reading font
-#define TFT_SPR_SML_W 120             //!< Small (unfocused) sprite width
-#define TFT_SPR_SML_H 33              //!< Small (unfocused) sprite heigth
-
-#define TFT_SPR_BIG_F FruBoldNarrow54 //!< Big (focused) reading font
-#define TFT_SPR_BIG_W 165             //!< Big (focused) sprite width
-#define TFT_SPR_BIG_H 48              //!< Big (focused) sprite heigth
-
-#define TFT_SPR_MEA_F FruBoldNarrow34 //!< Measurement units reading font
-#define TFT_SPR_MEA_W 32              //!< Measurement units sprite width
-#define TFT_SPR_MEA_H 33              //!< Measurement units sprite heigth
-#define TFT_SPR_MEA_X_DISP 205        //!< Measurement units displacement from left frame
-#define TFT_SPR_MEA_X_DISP_BIG 11     //!< Measurement units
-
-#define TFT_SPR_BAR_WIDTH 190
-
-#define TFT_YN -1       //!< First Line y
-#define TFT_Y1 53       //!< First Line y
-#define TFT_Y2 84       //!< Second Line y
-#define TFT_Y3 115      //!< Third Line y
-#define TFT_FC 193      //!< Focused Line y
-#define TFT_FL_DISPL 44 //!< Fourth Line y displacement
-#define TFT_ATZERO 0, 0
-
-///@}
 /*! 
  *  @brief     Readings class.
  *  @details   A single INA219 Reading
@@ -150,9 +95,10 @@ public:
      * 
      * @param[in] Label Data to be read
      * @param[in] Unit Data measurement unit
-     * @param[in] Y Data measurement unit
+     * @param[in] MP Data must be printed?
+     * @param[in] RTOS Queue
      */
-    reading(const char *Label, const char *Unit, int Y, const unsigned short *Icon);
+    reading(const char *label, uint8_t icon, uint8_t unit, uint16_t tft_area, uint8_t testerId);
     /**
      * @brief  Reset reading to default (empty) values.
      * 
@@ -168,10 +114,9 @@ public:
      * @brief Show single data reading 
      * 
      * @param[in] S Stream accepting data
-     * @param[in] Xoff Offset in LCD Display 
      * @param[in] BgColor BackGround Color (output cutoff or active)
      */
-    void display(Stream *S, int Xoff, int BgColor);
+    void display(Stream *S, int BgColor);
     /**
      * @brief 
      * 
@@ -202,7 +147,7 @@ public:
      * 
      * @return bool Current (set) Holding Mode 
      */
-    bool setHoldingMode(bool HoldingMode, uint32_t BgColor, int Xoff);
+    bool setHoldingMode(bool HoldingMode, uint32_t BgColor);
     /**
      * @brief Set Holding Mode for current Reading
      * 
@@ -210,27 +155,23 @@ public:
      */
     bool getHoldingMode();
     /**
-     * @brief Get current Reading Measurement Unit
+     * @brief Display TFT icons
      * 
-     * @return char* Current Measurement Unit
+     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
      */
-    char *getMeasurementUnit();
+    void ShowIcons(uint32_t BgColor);
     /**
-     * @brief Get current Reading y tft print line
+     * @brief Display TFT icons (Hold Mode Only)
      * 
-     * @return bool Current Holding Mode y tft print line
+     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
      */
-    uint16_t gety();
+    void ShowIconsHold(uint32_t BgColor);
     /**
-     * @brief Set the TFT Panel for output
+     * @brief Display TFT icons (Hold Mode Only)
      * 
-     * @remark Set the TFT Panel used for data output
-     * 
-     * @param[in] TFT_eSPI object referencing TFT Panel
-     * @param[in] TFT_eSprite object referencing TFT Sprite (READING)
-     * @param[in] TFT_eSprite object referencing TFT Sprite (BAR)
+     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
      */
-    void setTFT(TFT_eSPI *tft, TFT_eSprite *spr, TFT_eSprite *bar);
+    void RemoveIconsHold(uint32_t BgColor);
 
 private:
     /**
@@ -258,24 +199,20 @@ private:
      */
     int _get_reads();
 
-    char _Unit[8] = {0};  ///!< Measurement unit
-    char _Label[4] = {0}; ///!< Data to be read
+    char _Label[8] = {0}; ///!< Measurement unit
+    uint8_t _Icon;
+    uint8_t _Unit;
+    unsigned char _DisplayID; //!< TFT Display ID
 
     int _IR_min;   //!< Minimum value read
     int _IR_pile;  //!< Values pile
     int _IR_max;   //!< Maximum value read
     int _IR_reads; //!< Number of readings
 
-    uint8_t _SerialPrints;              //!< Serial Printout Mode (No print, machine parsed, human readable)
-    bool _focus;                        //!< This is the current focused reading
-    bool _hold;                         //!< Hold mode (retain values)
-    uint16_t _y;                        //!< TFT y display coordinate
-    TFT_eSPI *_tft;                     //!< TFT Display
-    TFT_eSprite *_spr;                  //!< TFT Display Sprite (READING)
-    TFT_eSprite *_bar;                  //!< TFT Display Sprite (BAR)
-    uint16_t _tft_width;                //!< TFT Width (x)
-    uint16_t _tft_height;               //!< TFT Width (y)
-    const unsigned short *_tft_MU_icon; //!< TFT Width (y)
+    uint8_t _SerialPrints; //!< Serial Printout Mode (No print, machine parsed, human readable)
+    bool _focus;           //!< This is the current focused reading
+    bool _hold;            //!< Hold mode (retain values)
+    uint16_t _tft_area;    //!< TFT display area
 };
 
 /** @name Readings
@@ -306,10 +243,11 @@ private:
  *  To speed up things ...
  */
 ///@{
-#define D_OFF 0     //!<Serial output disabled
-#define D_MACHINE 1 //!<Serial output is intended to be parsed by an automatic parser (machine)
-#define D_REDUCED 2 //!<Serial will output is intended to be read from an human operator (colors, readable layout)
-#define D_HUMAN 3   //!<Serial will output is intended to be read from an human operator (colors, readable layout)
+#define D_OFF 0      //!<Serial output disabled
+#define D_MESSAGES 1 //!<Serial output is intended to be parsed by an automatic parser (machine)
+#define D_MACHINE 2  //!<Serial output is intended to be parsed by an automatic parser (machine)
+#define D_REDUCED 3  //!<Serial will output is intended to be read from an human operator (colors, readable layout)
+#define D_HUMAN 4    //!<Serial will output is intended to be read from an human operator (colors, readable layout)
 ///@}
 
 /** @name Reading Defaults
@@ -329,9 +267,11 @@ private:
  *  Output can be cut off by relay
  */
 ///@{
-#define OUTPUT_CUTOFF 0 //!<PSU output disabled
-#define OUTPUT_ACTIVE 1 //!<PSU output enabled
+#define OUTPUT_CUTOFF false //!<PSU output disabled
+#define OUTPUT_ACTIVE true  //!<PSU output enabled
 ///@}
+
+#define INA219_I2C_OFFSET 0X40
 
 /*! 
  *  @brief     Main PowerTester class,
@@ -351,7 +291,7 @@ public:
      * @param[in] i2c_address I2C Address of INA219 chip
      * @param[in] Id INA219 chip Textual label (debug purposes)
      */
-    powertester(uint8_t i2c_address, const char *Id, int Xoff, uint8_t OutPin);
+    powertester(uint8_t i2c_address, const char *Id, uint8_t OutPin);
     /**
      * @brief Initialize INA219 chip
      * 
@@ -418,22 +358,14 @@ public:
 
 private:
     char _Id[8];                      //!< INA219 Chip Label
+    unsigned char _DisplayID;         //!< TFT Display ID
     int _Address;                     //!< INA219 I2C address (default 0x40)
     bool _Active;                     //!< INA219 is active (I2C Reachable??)
-    int _Xoffset;                     //!< TFT Horizontal Offset for PSU
     bool _Output;                     //!< Output is connected ...
     bool _HoldingMode;                //!< Holding mode
     uint8_t _OutPin;                  //!< The pin driving output relay
     std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
     uint8_t _SerialPrints;            //!< Serial Printout Mode (No print, machine parsed, human readable)
-    TFT_eSPI *_tft;                   //!< TFT Display
-    TFT_eSprite *_spr_big;            //!< TFT Display Sprite (LARGE FONT)
-    TFT_eSprite *_spr_small;          //!< TFT Display Sprite (SMALL FONT)
-    TFT_eSprite *_spr_leftbutton;     //!< TFT Display Sprite (LEFT BUTTON - RELAY)
-    TFT_eSprite *_spr_rightbutton;    //!< TFT Display Sprite (RIGHT BUTTON - HOLD)
-    TFT_eSprite *_spr_databar;        //!< TFT Display Sprite (DATABAR)
-    uint16_t _tft_width;              //!< TFT Width (x)
-    uint16_t _tft_height;             //!< TFT Width (y)
     std::array<reading, 5> _Readings; //!< INA219 Reading fields
 };
 
