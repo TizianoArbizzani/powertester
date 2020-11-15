@@ -98,7 +98,7 @@ public:
      * @param[in] MP Data must be printed?
      * @param[in] RTOS Queue
      */
-    reading(const char *label, uint8_t icon, uint8_t unit, uint16_t tft_area, uint8_t testerId);
+    reading(const char *label, uint8_t icon, uint8_t unit, uint8_t tft_area, uint8_t testerId);
     /**
      * @brief  Reset reading to default (empty) values.
      * 
@@ -149,7 +149,7 @@ public:
      */
     bool setHoldingMode(bool HoldingMode, uint32_t BgColor);
     /**
-     * @brief Set Holding Mode for current Reading
+     * @brief Get Holding Mode for current Reading
      * 
      * @return bool Current Holding Mode 
      */
@@ -161,17 +161,11 @@ public:
      */
     void ShowIcons(uint32_t BgColor);
     /**
-     * @brief Display TFT icons (Hold Mode Only)
+     * @brief Get Reading Tft Area
      * 
-     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
+     * @return uint8_t Tft Area tied to Reading
      */
-    void ShowIconsHold(uint32_t BgColor);
-    /**
-     * @brief Display TFT icons (Hold Mode Only)
-     * 
-     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
-     */
-    void RemoveIconsHold(uint32_t BgColor);
+    uint8_t getTftArea();
 
 private:
     /**
@@ -198,10 +192,22 @@ private:
      * @return int 
      */
     int _get_reads();
+    /**
+     * @brief Display TFT icons (Hold Mode Only)
+     * 
+     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
+     */
+    void _ShowIconsHold(uint32_t BgColor);
+    /**
+     * @brief Display TFT icons (Hold Mode Only)
+     * 
+     * @remark A focused reading is displayed at the center of lcd and is under hispeed sampling
+     */
+    void _RemoveIconsHold(uint32_t BgColor);
 
-    char _Label[8] = {0}; ///!< Measurement unit
-    uint8_t _Icon;
-    uint8_t _Unit;
+    char _Label[8] = {0};     //!< Measurement unit
+    uint8_t _Icon;            //!< Reading icon
+    uint8_t _Unit;            //!< Measurement unit icon
     unsigned char _DisplayID; //!< TFT Display ID
 
     int _IR_min;   //!< Minimum value read

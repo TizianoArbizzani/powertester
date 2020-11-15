@@ -13,7 +13,7 @@ extern xQueueHandle MsgQueue;
 reading::reading(const char *label,
                  uint8_t icon,
                  uint8_t unit,
-                 uint16_t tft_area,
+                 uint8_t tft_area,
                  uint8_t testerId) : _Icon(icon),
                                      _Unit(unit),
                                      _DisplayID(testerId),
@@ -217,7 +217,7 @@ bool reading::setHoldingMode(bool HoldingMode, uint32_t BgColor)
     {
         if (HoldingMode)
         {
-            ShowIconsHold(BgColor); // Show holding mode Icons
+            _ShowIconsHold(BgColor); // Show holding mode Icons
         }
         else
         {
@@ -232,7 +232,7 @@ bool reading::setHoldingMode(bool HoldingMode, uint32_t BgColor)
             Msg.Area = TFT_A_LB_DATA; // Remove Minimum Data
             _tft_push(&Msg);
 
-            RemoveIconsHold(BgColor); // Remove holding mode Icons
+            _RemoveIconsHold(BgColor); // Remove holding mode Icons
         }
     }
 
@@ -243,32 +243,29 @@ bool reading::getHoldingMode() { return (_hold); }
 
 void reading::ShowIcons(uint32_t BgColor)
 {
-    if (!_tft_area)
-        return;
-
     tft_message Msg;
-    Msg.BgColor = 0XAA; // Unuseful Value (Debug Only)
-    Msg.FgColor = 0XBB; // Unuseful Value (Debug Only)
     Msg.Sender = _DisplayID;
 
-    Msg.Area = _tft_area + 1;
+    // Reading type Icon
+    Msg.Area = READ_ICON_AREA;
     Msg.Message[0] = _Icon;
     _tft_push(&Msg);
 
-    Msg.Area = _tft_area + 2;
+    // Measure Unit Icon
+    Msg.Area = UNIT_ICON_AREA;
     Msg.Message[0] = _Unit;
     _tft_push(&Msg);
 
     if (_focus)
     {
         if (_hold)
-        {
-            ShowIconsHold(BgColor);
-        }
+            _ShowIconsHold(BgColor); // Show Min/Max Icons
+        else
+            _RemoveIconsHold(BgColor); // Show Min/Max Icons
     }
 }
 
-void reading::ShowIconsHold(uint32_t BgColor)
+void reading::_ShowIconsHold(uint32_t BgColor)
 {
     tft_message Msg;
     Msg.BgColor = 0XCC; // Unuseful Value (Debug Only)
@@ -292,7 +289,7 @@ void reading::ShowIconsHold(uint32_t BgColor)
     _tft_push(&Msg);
 }
 
-void reading::RemoveIconsHold(uint32_t BgColor)
+void reading::_RemoveIconsHold(uint32_t BgColor)
 {
     tft_message Msg;
     Msg.BgColor = BgColor; // Unuseful Value (Debug Only)
@@ -315,6 +312,8 @@ void reading::RemoveIconsHold(uint32_t BgColor)
     Msg.Message[0] = TFT_ICON_MU_NL;
     _tft_push(&Msg);
 }
+
+uint8_t reading::getTftArea() { return (_tft_area); }
 
 // --------------------------------
 //  READING - Private
@@ -516,7 +515,8 @@ bool powertester::setOutputMode(bool OutputMode)
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
-        it->ShowIcons((_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
+        if (it->getTftArea())
+            it->ShowIcons((_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
     }
 
     return (_Output);

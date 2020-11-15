@@ -29,7 +29,6 @@ powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OUTPIN); //!<Right INA21
 // Function prototypes
 void TouchManager();
 void IRAM_ATTR TouchDetected();
-//void tft_consumer(void *parameter);
 
 // Mandatory functions
 

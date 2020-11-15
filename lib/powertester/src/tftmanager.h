@@ -36,6 +36,9 @@
 #define RIGHT_OFFSET 242 //!< X value for right PSU Data
 #define LEFT_OFFSET 4    //!< X value for left PSU Data
 
+#define READ_ICON_AREA (_tft_area + 1) //!< Reading Icon Area
+#define UNIT_ICON_AREA (_tft_area + 2) //!< Measurement Unit Icon Area
+
 /** @name TFT Settings
  *  Settings Related to TFT Panel
  *  
@@ -58,8 +61,8 @@
 #define TFT_SPR_MEA_W 32              //!< Measurement units sprite width
 #define TFT_SPR_MEA_H 33              //!< Measurement units sprite heigth
 #define TFT_SPR_MEA_X_DISP 205        //!< Measurement units displacement from left frame
-#define TFT_SPR_MEA_Y_DISP_BIG 8      //!< Measurement units
-#define TFT_SPR_UNI_Y_DISP_BIG 11     //!< Measurement units
+#define TFT_SPR_MEA_Y_DISP_BIG 8      //!< Measurement units vertical displacement (32x32)
+#define TFT_SPR_UNI_Y_DISP_BIG 11     //!< Reading icon vertical displacement (24x24)
 #define TFT_SPR_BAR_WIDTH 190         //!< Value bar width
 #define TFT_YN 0                      //!< First Line y
 #define TFT_Y1 53                     //!< First Line y
@@ -111,7 +114,7 @@ typedef struct
     char Message[16];
 } tft_message;
 
-/** @name TFT Settings
+/** @name TFT Areas
  *  Settings Related to TFT Panel
  *  
  */
@@ -141,22 +144,22 @@ typedef struct
 #define TFT_A_DATABAR 22 //!<
 ///@}
 
-#define TFT_ICON_RE_NL 0
+#define TFT_ICON_RE_NL 0 //!< Reading NULL Icon
 #define TFT_ICON_RE_BU 1 //!<
 #define TFT_ICON_RE_LD 2 //!<
 #define TFT_ICON_RE_PW 3 //!<
 #define TFT_ICON_RE_CU 4 //!<
 #define TFT_ICON_RE_MI 5 //!<
 #define TFT_ICON_RE_MA 6 //!<
-#define TFT_ICON_MU_NL 0
-#define TFT_ICON_MU_AM 7 //!<
-#define TFT_ICON_MU_VL 8 //!<
-#define TFT_ICON_MU_WT 9 //!<
+#define TFT_ICON_MU_NL 0 //!< Measure Unit NULL Icon
+#define TFT_ICON_MU_AM 7 //!< Measure Unit AMPERE Icon
+#define TFT_ICON_MU_VL 8 //!< Measure Unit VOLT Icon
+#define TFT_ICON_MU_WT 9 //!< Measure Unit WATT Icon
 
 /**
- * @brief Consumes task queue 
+ * @brief Initialize TFT Manager Thread
  * 
- * @param[in] parameter Function Parameter (Unuseful at the moment)
+ * @param[in] PrintMode Serial debug level
  */
 void tft_manager_init(uint8_t PrintMode);
 
