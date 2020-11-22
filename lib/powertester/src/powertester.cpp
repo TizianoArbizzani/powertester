@@ -13,7 +13,6 @@ extern xQueueHandle MsgQueue;
 reading::reading(const char *label,
                  uint8_t icon,
                  uint8_t unit,
-                 uint8_t tft_area,
                  uint8_t testerId) : _Icon(icon),
                                      _Unit(unit),
                                      _DisplayID(testerId),
@@ -22,10 +21,9 @@ reading::reading(const char *label,
                                      _IR_max(R_DEF_MAX),
                                      _IR_reads(R_DEF_READS),
                                      _focus(false),
-                                     _hold(NO_HOLD_MODE),
-                                     _tft_area(tft_area)
+                                     _hold(NO_HOLD_MODE)
 {
-    strncpy(_Label, label, 4);
+    strncpy(_Label, label, 7);
 }
 
 void reading::reset()
@@ -195,9 +193,22 @@ void reading::display(Stream *S, int BgColor)
     }
 }
 
-bool reading::setFocus(bool Focus = true)
+bool reading::setFocus(bool Focus, uint8_t DisplayArea)
 {
     _focus = Focus;
+    _tft_area = DisplayArea;
+
+    if (Focus)
+    {
+        // Message preparation
+        tft_message Message;
+        Message.Sender = _DisplayID;
+        Message.BgColor = TFT_ON_COLOR;
+        Message.FgColor = TFT_BLACK;
+        Message.Area = TFT_A_L_BUTTN;
+        sprintf(Message.Message, "%s", _Label);
+        _tft_push(&Message);
+    }
 
     return (_focus);
 }
@@ -346,31 +357,27 @@ int reading::_get_mean()
 
 powertester::powertester(uint8_t i2c_address,
                          const char *Id,
-                         uint8_t OutPin) : Adafruit_INA219(i2c_address),
-                                           _DisplayID(i2c_address - INA219_I2C_OFFSET),
-                                           _Address(i2c_address),
-                                           _Active(false),
-                                           _Output(false),
-                                           _HoldingMode(false),
-                                           _OutPin(OutPin),
-                                           _Readings({reading("BU", TFT_ICON_RE_BU, TFT_ICON_MU_VL, TFT_A_L1_DATA, i2c_address - INA219_I2C_OFFSET),
-                                                      reading("SH", TFT_ICON_RE_NL, TFT_ICON_MU_VL, TFT_A_UNDEFIN, i2c_address - INA219_I2C_OFFSET),
-                                                      reading("LD", TFT_ICON_RE_LD, TFT_ICON_MU_VL, TFT_A_L2_DATA, i2c_address - INA219_I2C_OFFSET),
-                                                      reading("CU", TFT_ICON_RE_CU, TFT_ICON_MU_AM, TFT_A_LF_DATA, i2c_address - INA219_I2C_OFFSET),
-                                                      reading("PW", TFT_ICON_RE_PW, TFT_ICON_MU_WT, TFT_A_L3_DATA, i2c_address - INA219_I2C_OFFSET)})
+                         uint8_t OutPin,
+                         uint8_t *DT) : Adafruit_INA219(i2c_address),
+                                        _DisplayID(i2c_address - INA219_I2C_OFFSET),
+                                        _Address(i2c_address),
+                                        _Active(false),
+                                        _Output(false),
+                                        _HoldingMode(false),
+                                        _OutPin(OutPin),
+                                        _DT(DT),
+                                        _Readings({reading("Bus", TFT_ICON_RE_BU, TFT_ICON_MU_VL, _DisplayID),
+                                                   reading("Shnt", TFT_ICON_RE_NL, TFT_ICON_MU_VL, _DisplayID),
+                                                   reading("Load", TFT_ICON_RE_LD, TFT_ICON_MU_VL, _DisplayID),
+                                                   reading("Curr", TFT_ICON_RE_CU, TFT_ICON_MU_AM, _DisplayID),
+                                                   reading("Powr", TFT_ICON_RE_PW, TFT_ICON_MU_WT, _DisplayID)})
 {
-    // Initialize Read Mode
-    _ReadMask.reset();
-    _ReadMask.set(IR_CURR);
-
     // Setting Powertester Identificator
     strncpy(_Id, Id, 8);
 }
 
-bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap = IR_CURR)
+bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN)
 {
-    int i = 0;
-
     // Initalizing INA219 chip
     if (!begin())
     {
@@ -393,13 +400,9 @@ bool powertester::setup(TFT_eSPI *tft, uint8_t SerialMode = D_HUMAN, int Bitmap 
 
     _SerialPrints = SerialMode;
 
-    std::bitset<32> TBS(Bitmap);
-    _ReadMask = TBS;
-
     for (auto Curr_Reading = _Readings.begin(); Curr_Reading != _Readings.end(); ++Curr_Reading)
     {
         Curr_Reading->setSerialPrints(_SerialPrints);
-        Curr_Reading->setFocus(_ReadMask[i++]);
     }
 
     return (_Active);
@@ -469,15 +472,14 @@ void powertester::display(Stream *S)
 bool powertester::setHoldingMode(bool HoldingMode)
 {
     tft_message Message;
-
-    _HoldingMode = HoldingMode;
-
     Message.Sender = _DisplayID;
     Message.Area = TFT_A_R_BUTTN;
     Message.BgColor = 0;
     Message.FgColor = 0;
     Message.Message[0] = (HoldingMode) ? 1 : 0;
     _tft_push(&Message);
+
+    _HoldingMode = HoldingMode;
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {
@@ -487,20 +489,53 @@ bool powertester::setHoldingMode(bool HoldingMode)
     return (HoldingMode);
 }
 
+void powertester::setFocus(uint8_t FR)
+{
+    int i = 0;
+
+    _FocusedReading = FR;
+
+    Serial.printf(TFT_COLOR "* TFT   " RESET ": SetFocus Init ...... [" B_GRE "(%s) FR: %u" RESET "]\r\n", _Id, FR);
+
+    // Initialize Read Mode
+    _ReadMask.reset();
+    _ReadMask.set(FR);
+
+    for (auto Curr_Reading = _Readings.begin(); Curr_Reading != _Readings.end(); ++Curr_Reading)
+    {
+        //Serial.printf(B_RED "* TFT   " RESET ": (%s) SetFocus ........... [" B_GRE "Focus: %u Area: %u" RESET "]\r\n",
+        // _Id, (FR == i), _DT[(FR * TFT_CONFIGS) + i]);
+
+        Curr_Reading->setFocus((FR == i), _DT[(FR * TFT_CONFIGS) + i]);
+        i++;
+    }
+}
+
+void powertester::updateFocus()
+{
+    uint8_t CurFocus = _FocusedReading + 1;
+
+    setFocus((CurFocus == READINGS) ? IR_BUS : CurFocus);
+
+    for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
+    {
+        if (it->getTftArea())
+            it->ShowIcons((_Output) ? TFT_ON_COLOR : TFT_OFF_COLOR);
+    }
+}
+
 bool powertester::setOutputMode(bool OutputMode)
 {
     tft_message Message;
 
     _Output = OutputMode;
 
-    // Message preparation
+    // Background change
     Message.Sender = _DisplayID;
     Message.BgColor = 0;
     Message.FgColor = 0;
     Message.Message[0] = (OutputMode) ? 1 : 0;
-
-    // Button Change
-    Message.Area = TFT_A_L_BUTTN;
+    Message.Area = TFT_A_BACKGRD;
     _tft_push(&Message);
 
     // Relay Management
@@ -508,10 +543,6 @@ bool powertester::setOutputMode(bool OutputMode)
         RELAY_THROW(_OutPin);
     else
         RELAY_RELEASE(_OutPin);
-
-    // Background change
-    Message.Area = TFT_A_BACKGRD;
-    _tft_push(&Message);
 
     for (reading *it = _Readings.begin(); it != _Readings.end(); ++it)
     {

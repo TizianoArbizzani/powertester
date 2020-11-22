@@ -5,29 +5,47 @@
 
 #include <FS.h>
 #include <SPI.h>
+#include <SPIFFS.h>
 #include <TFT_eSPI.h>
 #include <powertester.h>
 #include <tftmanager.h>
 
+#define MAIN_LOOP_MONITOR_MS 5000 //!<
+
 // Global variables - Timings
 unsigned long NextPrint; //!<Time to go for next TFT TaskHandle_t ConsumerTask;Update
 unsigned long NextTouch; //!<Time to go for next Touch Reading
+unsigned long NextLoop;  //!<Time to go for next Touch Reading
 
 // Global variables - Generic
-uint8_t PrintMode = D_MESSAGES;                  //!<Serial printing verbose mode
-uint16_t Tx;                                     //!< Detected Touch X value
-uint16_t Ty;                                     //!< Detected Touch X value
-volatile boolean Td;                             //!< Detected Touch pressure
-xQueueHandle MsgQueue;                           //!< InterProcess Message Queue
-portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED; //!< Mux Management variable
+uint8_t PrintMode = D_MESSAGES;                         //!<Serial printing verbose mode
+volatile boolean Td;                                    //!< Detected Touch pressure
+uint16_t globalX;                                       //!< Detected Touch pressureAq
+uint16_t globalY;                                       //!< Detected Touch pressure
+xQueueHandle MsgQueue;                                  //!< InterProcess Message Queue
+static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED; //!< Mux Management variable
+
+uint8_t leftTable[TFT_CONFIGS * READINGS] = {
+    TFT_A_LF_DATA, TFT_A_UNDEFIN, TFT_A_L1_DATA, TFT_A_L2_DATA, TFT_A_L3_DATA,  // Focus on Bus Voltage
+    TFT_A_UNDEFIN, TFT_A_UNDEFIN, TFT_A_UNDEFIN, TFT_A_UNDEFIN, TFT_A_UNDEFIN,  // Focus on Shunt Voltage
+    TFT_A_L1_DATA, TFT_A_UNDEFIN, TFT_A_LF_DATA, TFT_A_L2_DATA, TFT_A_L3_DATA,  // Focus on Load Voltage
+    TFT_A_L1_DATA, TFT_A_UNDEFIN, TFT_A_L2_DATA, TFT_A_LF_DATA, TFT_A_L3_DATA,  // Focus on Current
+    TFT_A_L1_DATA, TFT_A_UNDEFIN, TFT_A_L2_DATA, TFT_A_L3_DATA, TFT_A_LF_DATA}; // Focus on Power Consumption
+
+uint8_t rightTable[TFT_CONFIGS * READINGS] = {
+    TFT_A_LF_DATA, TFT_A_UNDEFIN, TFT_A_L1_DATA, TFT_A_L2_DATA, TFT_A_L3_DATA,  // Focus on Bus Voltage
+    TFT_A_UNDEFIN, TFT_A_UNDEFIN, TFT_A_UNDEFIN, TFT_A_UNDEFIN, TFT_A_UNDEFIN,  // Focus on Shunt Voltage
+    TFT_A_L1_DATA, TFT_A_UNDEFIN, TFT_A_LF_DATA, TFT_A_L2_DATA, TFT_A_L3_DATA,  // Focus on Load Voltage
+    TFT_A_L1_DATA, TFT_A_UNDEFIN, TFT_A_L2_DATA, TFT_A_LF_DATA, TFT_A_L3_DATA,  // Focus on Current
+    TFT_A_L1_DATA, TFT_A_UNDEFIN, TFT_A_L2_DATA, TFT_A_L3_DATA, TFT_A_LF_DATA}; // Focus on Power Consumption
 
 // Global objects
-TFT_eSPI tft = TFT_eSPI();                                       //!<TFT Display
-powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OUTPIN);     //!<Left INA219 Chip (Left PSU)
-powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OUTPIN); //!<Right INA219 Chip (Right PSU)
+TFT_eSPI tft = TFT_eSPI();                                                   //!<TFT Display
+powertester PT_Left(LEFT_INA_I2C, LEFT_INA_ID, LEFT_OUTPIN, leftTable);      //!<Left INA219 Chip (Left PSU)
+powertester PT_Right(RIGHT_INA_I2C, RIGHT_INA_ID, RIGHT_OUTPIN, rightTable); //!<Right INA219 Chip (Right PSU)
 
 // Function prototypes
-void TouchManager();
+void TouchManager(uint16_t Tx, uint16_t Ty);
 void IRAM_ATTR TouchDetected();
 
 // Mandatory functions
@@ -157,11 +175,17 @@ void setup(void)
   if (PrintMode >= D_MESSAGES)
     Serial.printf(MAN_COLOR "* TFT   " RESET ": Initialization ..... [" B_GRE "Done" RESET "]\r\n");
 
-  PT_Left.setup(&tft, PrintMode, RS(IR_CURR));
-  PT_Right.setup(&tft, PrintMode, RS(IR_CURR));
+  PT_Left.setup(&tft, PrintMode);
+  PT_Right.setup(&tft, PrintMode);
 
   if (PrintMode >= D_MESSAGES)
-    Serial.printf(MAN_COLOR "* TESTER" RESET ": Focus on reading ... [" B_GRE "Current" RESET "]\r\n");
+    Serial.printf(MAN_COLOR "* TESTER" RESET ": Activated .......... [" B_GRE "Activated" RESET "]\r\n");
+
+  PT_Left.setFocus(IR_CURR);
+  PT_Right.setFocus(IR_CURR);
+
+  if (PrintMode >= D_MESSAGES)
+    Serial.printf(MAN_COLOR "* TESTER" RESET ": Focus on reading ... [" B_YEL "Current" RESET "]\r\n");
 
   PT_Left.setOutputMode(OUTPUT_CUTOFF);
   PT_Right.setOutputMode(OUTPUT_CUTOFF);
@@ -177,6 +201,7 @@ void setup(void)
 
   NextPrint = millis() + TFT_UPDATES_MS;
   NextTouch = millis();
+  NextLoop = millis() + MAIN_LOOP_MONITOR_MS;
 
   attachInterrupt(TFT_INTPIN, TouchDetected, FALLING);
 
@@ -195,33 +220,30 @@ void loop(void)
 
   if (Td)
   {
+    portENTER_CRITICAL(&mux);
     unsigned long Now = millis();
 
     if (Now >= NextTouch)
     {
-      uint16_t X;
-      uint16_t Y;
+      uint16_t localX;
+      uint16_t localY;
 
       NextTouch = Now + TFT_TOUCH_MS;
-      tft.getTouch(&X, &Y);
-      if ((X != Tx) && (Y != Ty))
-      {
-        Tx = X;
-        Ty = Y;
 
-        if (PrintMode >= D_MESSAGES)
-          Serial.printf(TCH_COLOR "* TOUCH " RESET ": Correct ............ [" B_GRE "X:%u Y:%u" RESET "]\r\n", Tx, Ty);
+      tft.getTouch(&localX, &localY);
 
-        TouchManager();
-      }
-      else
+      if (PrintMode >= D_MESSAGES)
+        Serial.printf(TCH_COLOR "* TOUCH " RESET ": .................... [" B_GRE "X:%u Y:%u" RESET "]\r\n", localX, localY);
+
+      if ((localX != globalX) || (localY != globalY))
       {
-        if (PrintMode >= D_MESSAGES)
-          Serial.printf(TCH_COLOR "* TOUCH " RESET ": Repeated ........... [" B_GRE "X:%u Y:%u" RESET "]\r\n", Tx, Ty);
+        globalX = localX;
+        globalY = localY;
+
+        TouchManager(localX, localY);
       }
     }
 
-    portENTER_CRITICAL(&mux);
     Td = false;
     portEXIT_CRITICAL(&mux);
   }
@@ -249,6 +271,15 @@ void loop(void)
     PT_Left.display(&Serial);
     PT_Right.display(&Serial);
     ONBOARD_LED_OFF;
+
+    //if (PrintMode >= D_MESSAGES)
+    //Serial.printf(MAN_COLOR "* LOOP  " RESET ": KeepAlive .......... [" B_GRE "OK" RESET "]\r\n");
+  }
+
+  if (millis() > NextLoop)
+  {
+    NextLoop = millis() + MAIN_LOOP_MONITOR_MS;
+    Serial.printf(MAN_COLOR "* LOOP  " RESET ": HeartBeat .......... [" B_GRE "%u" RESET "]\r\n", Td);
   }
 
   //-----------------------------------------------
@@ -263,9 +294,12 @@ void loop(void)
  */
 void IRAM_ATTR TouchDetected()
 {
-  portENTER_CRITICAL_ISR(&mux);
-  Td = true;
-  portEXIT_CRITICAL_ISR(&mux);
+  if (!Td)
+  {
+    portENTER_CRITICAL_ISR(&mux);
+    Td = true;
+    portEXIT_CRITICAL_ISR(&mux);
+  }
 }
 
 /**
@@ -273,30 +307,44 @@ void IRAM_ATTR TouchDetected()
  * 
  * @param[in] sender Tester Identification code
  */
-void TouchManager()
+void TouchManager(uint16_t Tx, uint16_t Ty)
 {
   if (Ty < 50)
   {
     switch (Tx / 120)
     {
     case 0:
-      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Output LEFT .... [" B_GRE "%d" RESET "]\r\n", (!PT_Left.getOutputMode()));
-      PT_Left.setOutputMode(!PT_Left.getOutputMode());
+      Serial.printf(ACT_COLOR "* TOUCH " RESET ": Set Output LEFT .... [" B_GRE "%d" RESET "]\r\n", (!PT_Left.getOutputMode()));
+      PT_Left.updateFocus();
       break;
     case 1:
-      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Holding LEFT ... [" B_GRE "%d" RESET "]\r\n", (!PT_Left.getHoldingMode()));
+      Serial.printf(ACT_COLOR "* TOUCH " RESET ": Set Holding LEFT ... [" B_GRE "%d" RESET "]\r\n", (!PT_Left.getHoldingMode()));
       PT_Left.setHoldingMode(!PT_Left.getHoldingMode());
       break;
     case 2:
-      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Output RIGHT ... [" B_GRE "%d" RESET "]\r\n", (!PT_Right.getOutputMode()));
-      PT_Right.setOutputMode(!PT_Right.getOutputMode());
+      Serial.printf(ACT_COLOR "* TOUCH " RESET ": Set Output RIGHT ... [" B_GRE "%d" RESET "]\r\n", (!PT_Right.getOutputMode()));
+      PT_Right.updateFocus();
       break;
     case 3:
-      Serial.printf(TCH_COLOR "* TOUCH " RESET ": Set Holding RIGHT .. [" B_GRE "%d" RESET "]\r\n", (!PT_Right.getHoldingMode()));
+      Serial.printf(ACT_COLOR "* TOUCH " RESET ": Set Holding RIGHT .. [" B_GRE "%d" RESET "]\r\n", (!PT_Right.getHoldingMode()));
       PT_Right.setHoldingMode(!PT_Right.getHoldingMode());
       break;
     default:
-      Serial.printf(N_RED "* TOUCH " RESET ": Button ............. [" N_RED "Unknown" RESET "]\r\n");
+      Serial.printf(ACT_COLOR "* TOUCH " RESET ": Button ............. [" N_RED "Unknown" RESET "]\r\n");
+      break;
+    }
+  }
+  else if (Ty < 286)
+  {
+    switch (Tx / 240)
+    {
+    case 0:
+      Serial.printf(ACT_COLOR "* TOUCH " RESET ": Set Output LEFT .... [" B_GRE "%d" RESET "]\r\n", (!PT_Left.getOutputMode()));
+      PT_Left.setOutputMode(!PT_Left.getOutputMode());
+      break;
+    case 1:
+      Serial.printf(ACT_COLOR "* TOUCH " RESET ": Set Output RIGHT ... [" B_GRE "%d" RESET "]\r\n", (!PT_Right.getOutputMode()));
+      PT_Right.setOutputMode(!PT_Right.getOutputMode());
       break;
     }
   }

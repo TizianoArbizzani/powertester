@@ -10,6 +10,8 @@
 #include <array>
 #include <bitset>
 
+#define READINGS 5 //!<Number of readings for chip
+
 /** @name Colors
  *  ANSI colors for terminals
  *  
@@ -42,6 +44,7 @@
 #define MAN_COLOR B_GRE
 #define TFT_COLOR B_YEL
 #define TCH_COLOR B_MAG
+#define ACT_COLOR B_RED
 ///@}
 
 /** @name Substruct Size
@@ -98,7 +101,7 @@ public:
      * @param[in] MP Data must be printed?
      * @param[in] RTOS Queue
      */
-    reading(const char *label, uint8_t icon, uint8_t unit, uint8_t tft_area, uint8_t testerId);
+    reading(const char *label, uint8_t icon, uint8_t unit, uint8_t testerId);
     /**
      * @brief  Reset reading to default (empty) values.
      * 
@@ -137,7 +140,7 @@ public:
      * 
      * @param[in] SerialMode Serial Mode
      */
-    bool setFocus(bool Focus);
+    bool setFocus(bool Focus, uint8_t DisplayArea);
     /**
      * @brief Set Holding Mode for current Reading
      * 
@@ -297,7 +300,7 @@ public:
      * @param[in] i2c_address I2C Address of INA219 chip
      * @param[in] Id INA219 chip Textual label (debug purposes)
      */
-    powertester(uint8_t i2c_address, const char *Id, uint8_t OutPin);
+    powertester(uint8_t i2c_address, const char *Id, uint8_t OutPin, uint8_t *DT);
     /**
      * @brief Initialize INA219 chip
      * 
@@ -312,7 +315,7 @@ public:
      * @return true Init Ok
      * @return false Init failed (i2c bus problems?)
      */
-    bool setup(TFT_eSPI *tft, uint8_t SerialMode, int Bitmap);
+    bool setup(TFT_eSPI *tft, uint8_t SerialMode);
     /**
      * @brief Complete Powertest Object settings
      *  
@@ -320,13 +323,6 @@ public:
      * 
      */
     void update(uint16_t Rm);
-    /**
-     * @brief Set the Reading object
-     * 
-     * @param[in] Bitmap The type of requested reading (bus voltage, shunt voltage, load current, load power)
-     * @attention Setting the type of request reading (using Readings definitions), RS(x) macro must be used ... 
-     */
-    void setReading(int Bitmap);
     /**
      * @brief Print the requested Reading
      * 
@@ -348,6 +344,19 @@ public:
      */
     bool setHoldingMode(bool HoldingMode);
     /**
+     * @brief Set the focused Reading object
+     * 
+     * @param[in] Bitmap The type of requested reading (bus voltage, shunt voltage, load current, load power)
+     * @attention Setting the type of request reading (using Readings definitions), RS(x) macro must be used ... 
+     */
+    void setFocus(uint8_t FR);
+    /**
+     * @brief Increase the focused Reading object
+     * 
+     * @attention Setting the type of request reading (using Readings definitions), RS(x) macro must be used ... 
+     */
+    void updateFocus();
+    /**
      * @brief Activats/Deactivates output line
      * 
      * @param[in] OutputMode Current must be connected to output "bocchettone"
@@ -363,16 +372,18 @@ public:
     bool getOutputMode();
 
 private:
-    char _Id[8];                      //!< INA219 Chip Label
-    unsigned char _DisplayID;         //!< TFT Display ID
-    int _Address;                     //!< INA219 I2C address (default 0x40)
-    bool _Active;                     //!< INA219 is active (I2C Reachable??)
-    bool _Output;                     //!< Output is connected ...
-    bool _HoldingMode;                //!< Holding mode
-    uint8_t _OutPin;                  //!< The pin driving output relay
-    std::bitset<32> _ReadMask;        //!< Which INA219 field must be read at max speed
-    uint8_t _SerialPrints;            //!< Serial Printout Mode (No print, machine parsed, human readable)
-    std::array<reading, 5> _Readings; //!< INA219 Reading fields
+    char _Id[8];                             //!< INA219 Chip Label
+    unsigned char _DisplayID;                //!< TFT Display ID
+    int _Address;                            //!< INA219 I2C address (default 0x40)
+    bool _Active;                            //!< INA219 is active (I2C Reachable??)
+    bool _Output;                            //!< Output is connected ...
+    bool _HoldingMode;                       //!< Holding mode
+    uint8_t _OutPin;                         //!< The pin driving output relay
+    uint8_t _FocusedReading;                 //!< Which INA219 field must be read at max speed
+    uint8_t _SerialPrints;                   //!< Serial Printout Mode (No print, machine parsed, human readable)
+    uint8_t *_DT;                            //!< Display table
+    std::array<reading, READINGS> _Readings; //!< INA219 Reading fields
+    std::bitset<32> _ReadMask;               //!< Which INA219 field must be read at max speed
 };
 
 #endif

@@ -12,8 +12,8 @@
 #define RIGHT_INA_ID "Dx"    //!<Right INA219 identification label
 #define RIGHT_OUTPIN 32      //!< Right PSU Data output relay driving pin
 
-#define TFT_UPDATES_MS 500 //!<TFT Update frequency in milliseconds
-#define TFT_TOUCH_MS 250   //!<Grace time between touch events
+#define TFT_UPDATES_MS 1000 //!<TFT Update frequency in milliseconds
+#define TFT_TOUCH_MS 250    //!<Grace time between touch events
 
 #define CALIBRATION_FILE "/calibrationData" //!<TFT calibration file
 

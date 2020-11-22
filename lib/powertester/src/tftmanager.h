@@ -39,6 +39,8 @@
 #define READ_ICON_AREA (_tft_area + 1) //!< Reading Icon Area
 #define UNIT_ICON_AREA (_tft_area + 2) //!< Measurement Unit Icon Area
 
+#define TFT_CONFIGS 5 //!<Number of TFT Schemas
+
 /** @name TFT Settings
  *  Settings Related to TFT Panel
  *  
@@ -57,6 +59,9 @@
 #define TFT_SPR_BIG_F FruBoldNarrow54 //!< Big (focused) reading font
 #define TFT_SPR_BIG_W 165             //!< Big (focused) sprite width
 #define TFT_SPR_BIG_H 48              //!< Big (focused) sprite heigth
+#define TFT_SPR_BUT_F FruBoldNarrow34 //!< Button reading font
+#define TFT_SPR_BUT_W 116             //!< Button sprite width
+#define TFT_SPR_BUT_H 45              //!< Button sprite heigth
 #define TFT_SPR_MEA_F FruBoldNarrow34 //!< Measurement units reading font
 #define TFT_SPR_MEA_W 32              //!< Measurement units sprite width
 #define TFT_SPR_MEA_H 33              //!< Measurement units sprite heigth
@@ -113,6 +118,15 @@ typedef struct
     uint16_t FgColor;
     char Message[16];
 } tft_message;
+
+typedef struct
+{
+    uint8_t r_bus;
+    uint8_t r_shunt;
+    uint8_t r_load;
+    uint8_t r_current;
+    uint8_t r_power;
+} tft_display_table;
 
 /** @name TFT Areas
  *  Settings Related to TFT Panel

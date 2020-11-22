@@ -68,20 +68,20 @@ void tft_consumer(void *parameter)
     _spr_big->loadFont(TFT_SPR_BIG_F);
     _spr_big->setTextDatum(TL_DATUM);
 
+    _spr_leftbutton->createSprite(TFT_SPR_BUT_W, TFT_SPR_BUT_H);
     _spr_leftbutton->setColorDepth(16);
-    _spr_leftbutton->createSprite(116, 45);
-    _spr_leftbutton->loadFont(TFT_SPR_SML_F);
+    _spr_leftbutton->loadFont(TFT_SPR_BUT_F);
     _spr_leftbutton->setTextDatum(TL_DATUM);
     _spr_leftbutton->fillSprite(TFT_BLACK);
 
+    _spr_rightbutton->createSprite(TFT_SPR_BUT_W, TFT_SPR_BUT_H);
     _spr_rightbutton->setColorDepth(16);
-    _spr_rightbutton->createSprite(116, 45);
-    _spr_rightbutton->loadFont(TFT_SPR_SML_F);
+    _spr_rightbutton->loadFont(TFT_SPR_BUT_F);
     _spr_rightbutton->setTextDatum(TL_DATUM);
     _spr_rightbutton->fillSprite(TFT_BLACK);
 
-    _spr_databar->setColorDepth(16);
     _spr_databar->createSprite(233, 30);
+    _spr_databar->setColorDepth(16);
     _spr_databar->loadFont(TFT_SPR_SML_F);
     _spr_databar->setTextDatum(TR_DATUM);
     _spr_databar->fillSprite(TFT_BLACK);
@@ -133,42 +133,32 @@ void tft_consumer(void *parameter)
             {
             case TFT_A_L_BUTTN:
             {
-                Serial.printf(TFT_COLOR "* TFT   " RESET ": Message ............ [" B_GRE "S:%u LEFT C:%04X:%04X M0:%u" RESET "]\r\n",
-                              Message.Sender, Message.BgColor, Message.FgColor, Message.Message[0]);
+                Serial.printf(TFT_COLOR "* TFT   " RESET ": Focused reading .... [" B_RED "%s" RESET "]\r\n",
+                              Message.Message);
 
-                if (Message.Message[0])
-                {
-                    _spr_leftbutton->setTextColor(TFT_BLACK, TFT_GREEN);
-                    _spr_leftbutton->fillRoundRect(0, 0, 116, 45, 8, TFT_DARKGREEN);
-                    _spr_leftbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_GREEN);
-                    _spr_leftbutton->drawString("On", 10, 7);
-                }
-                else
-                {
-                    _spr_leftbutton->setTextColor(TFT_BLACK, TFT_RED);
-                    _spr_leftbutton->fillRoundRect(0, 0, 116, 45, 8, TFT_MAROON);
-                    _spr_leftbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_RED);
-                    _spr_leftbutton->drawString("Off", 10, 7);
-                }
+                _spr_leftbutton->setTextColor(TFT_BLACK, TFT_SKYBLUE);
+                _spr_leftbutton->fillRoundRect(0, 0, TFT_SPR_BUT_W, TFT_SPR_BUT_H, 8, TFT_NAVY);
+                _spr_leftbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_SKYBLUE);
+                _spr_leftbutton->drawString(String(Message.Message), 10, 7);
                 _spr_leftbutton->pushSprite(Xoff, 4);
             }
             break;
             case TFT_A_R_BUTTN:
             {
-                Serial.printf(TFT_COLOR "* TFT   " RESET ": Message ............ [" B_GRE "S:%u RGHT C:%04X:%04X M0:%u" RESET "]\r\n",
-                              Message.Sender, Message.BgColor, Message.FgColor, Message.Message[0]);
+                //Serial.printf(TFT_COLOR "* TFT   " RESET ": Message ............ [" B_GRE "S:%u RGHT C:%04X:%04X M0:%u" RESET "]\r\n",
+                //              Message.Sender, Message.BgColor, Message.FgColor, Message.Message[0]);
 
                 if (Message.Message[0])
                 {
                     _spr_rightbutton->setTextColor(TFT_BLACK, TFT_GREEN);
-                    _spr_rightbutton->fillRoundRect(0, 0, 116, 45, 8, TFT_DARKGREEN);
+                    _spr_rightbutton->fillRoundRect(0, 0, TFT_SPR_BUT_W, TFT_SPR_BUT_H, 8, TFT_DARKGREEN);
                     _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_GREEN);
                     _spr_rightbutton->drawString("Hold", 10, 7);
                 }
                 else
                 {
                     _spr_rightbutton->setTextColor(TFT_BLACK, TFT_RED);
-                    _spr_rightbutton->fillRoundRect(0, 0, 116, 45, 8, TFT_MAROON);
+                    _spr_rightbutton->fillRoundRect(0, 0, TFT_SPR_BUT_W, TFT_SPR_BUT_H, 8, TFT_MAROON);
                     _spr_rightbutton->fillRoundRect(4, 4, 108, 37, 8, TFT_RED);
                     _spr_rightbutton->drawString("Hold", 10, 7);
                 }
@@ -258,8 +248,8 @@ void tft_consumer(void *parameter)
             break;
             case TFT_A_BACKGRD:
             {
-                Serial.printf(TFT_COLOR "* TFT   " RESET ": Message ............ [" B_GRE "S:%u BACK C:%04X:%04X M0:%u" RESET "]\r\n",
-                              Message.Sender, Message.BgColor, Message.FgColor, Message.Message[0]);
+                //Serial.printf(TFT_COLOR "* TFT   " RESET ": Message ............ [" B_GRE "S:%u BACK C:%04X:%04X M0:%u" RESET "]\r\n",
+                //             Message.Sender, Message.BgColor, Message.FgColor, Message.Message[0]);
 
                 if (Message.Message[0])
                 {
